@@ -1,26 +1,22 @@
 # HASS-Deepstack
-[Home Assistant](https://www.home-assistant.io/) custom component for using Deepstack face recognition &amp; object detection. The component adds an `image_processing` entity where the state of the entity is the total number of faces that are found in the camera image. The gender of faces is listed in the entity attributes.
+[Home Assistant](https://www.home-assistant.io/) custom components for using Deepstack face recognition &amp; object detection. [Deepstack](https://www.deepquestai.com/insider/) is a service which runs in a docker container and exposes deep-learning models via a REST API. There is no cost for using Deepstack, although you will need a machine with 8 GB RAM. On your machine with docker, pull the latest image (approx. 2GB):
 
-[Deepstack](https://www.deepquestai.com/insider/) is a service which runs in a docker container and exposes deep-learning models for performing facial recognition and object detection. There is no cost for using Deepstack, although you will need a machine with 8 GB RAM.
-
-## Setup Deepstack
-On your machine with docker, pull the latest image (approx. 2GB):
 ```
 sudo docker pull deepquestai/deepstack
 ```
 
-Run Deepstack with the face recognition service active:
+**GPU users** Note that if your machine has an Nvidia GPU you can get a 5 x 20 times performance boost by using the GPU, [read the docs here](https://deepstackpython.readthedocs.io/en/latest/gpuinstall.html#gpuinstall).
+
+## Home Assistant setup
+Place the `custom_components` folder in your configuration directory (or add its contents to an existing `custom_components` folder). Then configure face recognition and/or object detection.
+
+## Face Recognition
+On you machine with docker, run Deepstack with the face recognition service active on port `5000`:
 ```
 sudo docker run -e VISION-FACE=True -v localstorage:/datastore -p 5000:5000 deepquestai/deepstack
 ```
 
-This will expose the service on port `5000`.
-
-**GPU users** Note that if your machine has an Nvidia GPU you can get a 5 x 20 times performance boost by using the GPU, [read the docs here](https://deepstackpython.readthedocs.io/en/latest/gpuinstall.html#gpuinstall).
-
-## Configure Home Assistant
-
-Place the `custom_components` folder in your configuration directory (or add its contents to an existing `custom_components` folder).
+The `deepstack_face` component adds an `image_processing` entity where the state of the entity is the total number of faces that are found in the camera image. The gender of faces is listed in the entity attributes.
 
 Add to your Home-Assistant config:
 ```yaml
@@ -45,6 +41,32 @@ Configuration variables:
 <p align="center">
 <img src="https://github.com/robmarkcole/HASS-Deepstack/blob/master/docs/detail.png" width="350">
 </p>
+
+## Object Detection
+On you machine with docker, run Deepstack with the object detection service active on port `5000`:
+```
+sudo docker run -e VISION-DETECTION=True -v localstorage:/datastore -p 5000:5000 deepquestai/deepstack
+```
+
+The `deepstack_object` component adds an `image_processing` entity where the state of the entity is the total number of objects that are found in the camera image. Alternatively a `target` object can be configured, in which case the state is the total number of target objects detected. The class and number objects of each class is listed in the entity attributes.
+
+Add to your Home-Assistant config:
+```yaml
+image_processing:
+  - platform: deepstack_object
+    ip_address: localhost
+    port: 5000
+    target: person
+    source:
+      - entity_id: camera.local_file
+        name: my_deepstack_name
+```
+Configuration variables:
+- **ip_address**: the ip address of your deepstack instance.
+- **port**: the port of your deepstack instance.
+- **source**: Must be a camera.
+- **target**: (Optional) A target object class.
+- **name**: (Optional) A custom name for the the entity.
 
 ### FAQ
 Q1: I get the following warning, is this normal?

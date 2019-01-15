@@ -23,7 +23,7 @@ from homeassistant.const import (
 
 _LOGGER = logging.getLogger(__name__)
 
-CLASSIFIER = 'deepstack'
+CLASSIFIER = 'deepstack_face'
 
 
 PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
