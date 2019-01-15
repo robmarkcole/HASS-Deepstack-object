@@ -32,6 +32,15 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
 })
 
 
+def get_genders(predictions):
+    """
+    Get the genders of predictions.
+    """
+    males = len([face for face in predictions if face['gender'] == 'male'])
+    females = len([face for face in predictions if face['gender'] == 'female'])
+    return {'males': males, 'females': females}
+
+
 def post_image(url, image):
     """Post an image to the classifier."""
     try:
@@ -72,7 +81,7 @@ class FaceClassifyEntity(ImageProcessingFaceEntity):
         else:
             camera_name = split_entity_id(camera_entity)[1]
             self._name = "{} {}".format(CLASSIFIER, camera_name)
-        self._matched = {}
+        self.predictions = {}
 
     def process_image(self, image):
         """Process an image."""
@@ -80,9 +89,12 @@ class FaceClassifyEntity(ImageProcessingFaceEntity):
             self._url_check, image)
         if response:
             if response.status_code == HTTP_OK:
-                self.total_faces = len(response.json()["predictions"])
+                predictions_json = response.json()["predictions"]
+                self.predictions = get_genders(predictions_json)
+                self.total_faces = len(predictions_json)
         else:
             self.total_faces = None
+            self.predictions = {}
 
     @property
     def camera_entity(self):
@@ -93,3 +105,9 @@ class FaceClassifyEntity(ImageProcessingFaceEntity):
     def name(self):
         """Return the name of the sensor."""
         return self._name
+
+    @property
+    def device_state_attributes(self):
+        """Return the classifier attributes."""
+        return self.predictions
+

@@ -1,5 +1,5 @@
 # HASS-Deepstack
-[Home Assistant](https://www.home-assistant.io/) custom component for using Deepstack face recognition &amp; object detection. The component adds an `image_processing` entity where the state of the entity is the total number of faces that are found in the camera image.
+[Home Assistant](https://www.home-assistant.io/) custom component for using Deepstack face recognition &amp; object detection. The component adds an `image_processing` entity where the state of the entity is the total number of faces that are found in the camera image. The gender of faces is listed in the entity attributes.
 
 [Deepstack](https://www.deepquestai.com/insider/) is a service which runs in a docker container and exposes deep-learning models for performing facial recognition and object detection. There is no cost for using Deepstack, although you will need a machine with 8 GB RAM.
 
