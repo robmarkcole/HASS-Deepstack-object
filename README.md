@@ -42,6 +42,10 @@ Configuration variables:
 <img src="https://github.com/robmarkcole/HASS-Deepstack/blob/master/docs/usage.png" width="500">
 </p>
 
+<p align="center">
+<img src="https://github.com/robmarkcole/HASS-Deepstack/blob/master/docs/detail.png" width="350">
+</p>
+
 ### FAQ
 Q1: I get the following warning, is this normal?
 ```
