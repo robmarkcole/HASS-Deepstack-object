@@ -45,7 +45,7 @@ Configuration variables:
 ## Object Detection
 On you machine with docker, run Deepstack with the object detection service active on port `5000`:
 ```
-sudo docker run -e VISION-DETECTION=True -v localstorage:/datastore -p 5000:5000 deepquestai/deepstack
+sudo docker run -e VISION-DETECTION=True -v localstorage:/datastore -p 5000:5000 -d deepquestai/deepstack
 ```
 
 The `deepstack_object` component adds an `image_processing` entity where the state of the entity is the total number of `target` objects that are found in the camera image. The class and number objects of each class is listed in the entity attributes.
@@ -80,7 +80,7 @@ Configuration variables:
 Overall detection can be improved by running both face and object detection, but beware this results in significant memory usage. Configure the two components as above and run Deepstack with:
 
 ```
-sudo docker run -e VISION-DETECTION=True -e VISION-FACE=True -v localstorage:/datastore -p 5000:5000 deepquestai/deepstack
+sudo docker run -e VISION-DETECTION=True -e VISION-FACE=True -v localstorage:/datastore -p 5000:5000 -d deepquestai/deepstack
 ```
 
 <p align="center">
