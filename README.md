@@ -23,6 +23,7 @@ Add to your Home-Assistant config:
 image_processing:
   - platform: deepstack_face
     ip_address: localhost
+    scan_interval: 20000    
     port: 5000
     source:
       - entity_id: camera.local_file
@@ -55,6 +56,7 @@ Add to your Home-Assistant config:
 image_processing:
   - platform: deepstack_object
     ip_address: localhost
+    scan_interval: 20000    
     port: 5000
     target: person
     source:
