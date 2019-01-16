@@ -95,4 +95,5 @@ Q1: I get the following warning, is this normal?
 A1: Yes this is normal
 
 Q2: Why are there two custom components and not just one?
-A2: Its easier to maintain tow simple components than one complex one.
+
+A2: It is easier to maintain two simple components than one complex one.
