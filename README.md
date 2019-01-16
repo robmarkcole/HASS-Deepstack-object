@@ -26,7 +26,7 @@ image_processing:
     port: 5000
     source:
       - entity_id: camera.local_file
-        name: my_deepstack_name
+        name: face_counter
 ```
 Configuration variables:
 - **ip_address**: the ip address of your deepstack instance.
@@ -82,6 +82,10 @@ Overall detection can be improved by running both face and object detection, but
 ```
 sudo docker run -e VISION-DETECTION=True -e VISION-FACE=True -v localstorage:/datastore -p 5000:5000 deepquestai/deepstack
 ```
+
+<p align="center">
+<img src="https://github.com/robmarkcole/HASS-Deepstack/blob/master/docs/face_and_object_usage.png" width="500">
+</p>
 
 ### FAQ
 Q1: I get the following warning, is this normal?
