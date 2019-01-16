@@ -76,6 +76,13 @@ Configuration variables:
 <img src="https://github.com/robmarkcole/HASS-Deepstack/blob/master/docs/object_detail.png" width="350">
 </p>
 
+### Face & Object detection
+Overall detection can be improved by running both face and object detection, but beware this results in significant memory usage. Configure the two components as above and run Deepstack with:
+
+```
+sudo docker run -e VISION-DETECTION=True -e VISION-FACE=True -v localstorage:/datastore -p 5000:5000 deepquestai/deepstack
+```
+
 ### FAQ
 Q1: I get the following warning, is this normal?
 ```
@@ -83,8 +90,5 @@ Q1: I get the following warning, is this normal?
 ```
 A1: Yes this is normal
 
-Q2: Can I run both the face and object detection Deepstack endpoints at the same time?
-A2: Yes, this is described in the Deepstack docs, but beware the significant memory usage.
-
-Q3: Why are there two custom components and not just one?
-A3: Its easier to maintain tow simple components than one complex one.
+Q2: Why are there two custom components and not just one?
+A2: Its easier to maintain tow simple components than one complex one.
