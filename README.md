@@ -48,7 +48,7 @@ On you machine with docker, run Deepstack with the object detection service acti
 sudo docker run -e VISION-DETECTION=True -v localstorage:/datastore -p 5000:5000 deepquestai/deepstack
 ```
 
-The `deepstack_object` component adds an `image_processing` entity where the state of the entity is the total number of objects that are found in the camera image. Alternatively a `target` object can be configured, in which case the state is the total number of target objects detected. The class and number objects of each class is listed in the entity attributes.
+The `deepstack_object` component adds an `image_processing` entity where the state of the entity is the total number of `target` objects that are found in the camera image. The class and number objects of each class is listed in the entity attributes.
 
 Add to your Home-Assistant config:
 ```yaml
@@ -59,14 +59,22 @@ image_processing:
     target: person
     source:
       - entity_id: camera.local_file
-        name: my_deepstack_name
+        name: person_detector
 ```
 Configuration variables:
 - **ip_address**: the ip address of your deepstack instance.
 - **port**: the port of your deepstack instance.
 - **source**: Must be a camera.
-- **target**: (Optional) A target object class.
+- **target**: The target object class, default `person`.
 - **name**: (Optional) A custom name for the the entity.
+
+<p align="center">
+<img src="https://github.com/robmarkcole/HASS-Deepstack/blob/master/docs/object_usage.png" width="500">
+</p>
+
+<p align="center">
+<img src="https://github.com/robmarkcole/HASS-Deepstack/blob/master/docs/object_detail.png" width="350">
+</p>
 
 ### FAQ
 Q1: I get the following warning, is this normal?
@@ -74,3 +82,9 @@ Q1: I get the following warning, is this normal?
 2019-01-15 06:37:52 WARNING (MainThread) [homeassistant.loader] You are using a custom component for image_processing.deepstack_face which has not been tested by Home Assistant. This component might cause stability problems, be sure to disable it if you do experience issues with Home Assistant.
 ```
 A1: Yes this is normal
+
+Q2: Can I run both the face and object detection Deepstack endpoints at the same time?
+A2: Yes, this is described in the Deepstack docs, but beware the significant memory usage.
+
+Q3: Why are there two custom components and not just one?
+A3: Its easier to maintain tow simple components than one complex one.
