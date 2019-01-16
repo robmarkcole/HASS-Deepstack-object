@@ -69,7 +69,7 @@ Configuration variables:
 - **name**: (Optional) A custom name for the the entity.
 
 <p align="center">
-<img src="https://github.com/robmarkcole/HASS-Deepstack/blob/master/docs/object_usage.png" width="500">
+<img src="https://github.com/robmarkcole/HASS-Deepstack/blob/master/docs/object_usage.png" width="800">
 </p>
 
 <p align="center">
