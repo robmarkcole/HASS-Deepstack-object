@@ -106,5 +106,11 @@ Q3: The API return bounding boxes, why does this component not expose them?
 
 A3: The Home Assistant developers team are currently figuring out how bounding boxes should be handed, please feel free to add your thoughts to [this issue](https://github.com/home-assistant/architecture/issues/133).
 
+------
+
+Q4: Will Deepstack always be free, if so how do these guys make a living?
+
+A4: I'm informed there will always be a basic free version with preloaded models, while there will be an enterprise version with advanced features such as custom models and endpoints, which will be subscription based.
+
 ### Docker tips
 * Add the `-d` flag to run the container in background, thanks [@arsaboo](https://github.com/arsaboo)
