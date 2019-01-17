@@ -99,4 +99,4 @@ Q2: Why are there two custom components and not just one?
 A2: It is easier to maintain two simple components than one complex one.
 
 ### Docker tips
-* Add the `-d` flag to run the container in background, thanks @arsaboo.
+* Add the `-d` flag to run the container in background, thanks [@arsaboo](https://github.com/arsaboo)
