@@ -1,5 +1,5 @@
 # HASS-Deepstack
-[Home Assistant](https://www.home-assistant.io/) custom components for using Deepstack face recognition &amp; object detection. [Deepstack](https://www.deepquestai.com/insider/) is a service which runs in a docker container and exposes deep-learning models via a REST API. There is no cost for using Deepstack, although you will need a machine with 8 GB RAM. On your machine with docker, pull the latest image (approx. 2GB):
+[Home Assistant](https://www.home-assistant.io/) custom components for using Deepstack face &amp; object detection. [Deepstack](https://www.deepquestai.com/insider/) is a service which runs in a docker container and exposes deep-learning models via a REST API. There is no cost for using Deepstack, although you will need a machine with 8 GB RAM. On your machine with docker, pull the latest image (approx. 2GB):
 
 ```
 sudo docker pull deepquestai/deepstack
@@ -10,8 +10,8 @@ sudo docker pull deepquestai/deepstack
 ## Home Assistant setup
 Place the `custom_components` folder in your configuration directory (or add its contents to an existing `custom_components` folder). Then configure face recognition and/or object detection.
 
-## Face Recognition
-On you machine with docker, run Deepstack with the face recognition service active on port `5000`:
+## Face detection
+Deepstack [face detection](https://deepstackpython.readthedocs.io/en/latest/facedetection.html) detects faces and their gender. On you machine with docker, run Deepstack with the face detection service active on port `5000`:
 ```
 sudo docker run -e VISION-FACE=True -v localstorage:/datastore -p 5000:5000 deepquestai/deepstack
 ```
@@ -43,7 +43,7 @@ Configuration variables:
 </p>
 
 ## Object Detection
-On you machine with docker, run Deepstack with the object detection service active on port `5000`:
+Deepstack [object detection](https://deepstackpython.readthedocs.io/en/latest/objectdetection.html) can identify 80 different kinds of objects, including people (`person`) and animals. On you machine with docker, run Deepstack with the object detection service active on port `5000`:
 ```
 sudo docker run -e VISION-DETECTION=True -v localstorage:/datastore -p 5000:5000 deepquestai/deepstack
 ```
@@ -97,3 +97,6 @@ A1: Yes this is normal
 Q2: Why are there two custom components and not just one?
 
 A2: It is easier to maintain two simple components than one complex one.
+
+### Docker tips
+* Add the `-d` flag to run the container in background, thanks @arsaboo.
