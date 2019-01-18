@@ -1,5 +1,5 @@
 """
-Component that will perform facial detection and identification via deepstack.
+Component that will perform facial recognition via deepstack.
 
 For more details about this platform, please refer to the documentation at
 https://home-assistant.io/components/image_processing.deepstack_face
@@ -32,13 +32,11 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
 })
 
 
-def get_genders(predictions):
+def get_predicted_faces(predictions):
     """
-    Get the genders of predictions.
+    Get the predicted faces and their confidence.
     """
-    males = len([face for face in predictions if face['gender'] == 'male'])
-    females = len([face for face in predictions if face['gender'] == 'female'])
-    return {'males': males, 'females': females}
+    return {face['userid']: round(face['confidence']*100, 1) for face in predictions}
 
 
 def post_image(url, image):
@@ -73,7 +71,7 @@ class FaceClassifyEntity(ImageProcessingFaceEntity):
     def __init__(self, ip_address, port, camera_entity, name=None):
         """Init with the API key and model id."""
         super().__init__()
-        self._url_check = "http://{}:{}/v1/vision/face".format(
+        self._url_check = "http://{}:{}/v1/vision/face/recognize".format(
             ip_address, port)
         self._camera = camera_entity
         if name:
@@ -89,8 +87,9 @@ class FaceClassifyEntity(ImageProcessingFaceEntity):
             self._url_check, image)
         if response:
             if response.status_code == HTTP_OK:
+                _LOGGER.error("XXX %s", response.json())
                 predictions_json = response.json()["predictions"]
-                self.predictions = get_genders(predictions_json)
+                self.predictions = get_predicted_faces(predictions_json)
                 self.total_faces = len(predictions_json)
         else:
             self.total_faces = None
