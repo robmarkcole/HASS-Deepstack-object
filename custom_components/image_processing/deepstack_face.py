@@ -1,11 +1,12 @@
 """
-Component that will perform facial detection and identification via deepstack.
+Component that will perform facial recognition via deepstack.
 
 For more details about this platform, please refer to the documentation at
 https://home-assistant.io/components/image_processing.deepstack_face
 """
 import base64
 import logging
+import time
 
 import requests
 import voluptuous as vol
@@ -32,13 +33,11 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
 })
 
 
-def get_genders(predictions):
+def get_matched_faces(predictions):
     """
-    Get the genders of predictions.
+    Get the predicted faces and their confidence.
     """
-    males = len([face for face in predictions if face['gender'] == 'male'])
-    females = len([face for face in predictions if face['gender'] == 'female'])
-    return {'males': males, 'females': females}
+    return {face['userid']: round(face['confidence']*100, 1) for face in predictions if not face['userid'] == 'unknown'}
 
 
 def post_image(url, image):
@@ -73,7 +72,7 @@ class FaceClassifyEntity(ImageProcessingFaceEntity):
     def __init__(self, ip_address, port, camera_entity, name=None):
         """Init with the API key and model id."""
         super().__init__()
-        self._url_check = "http://{}:{}/v1/vision/face".format(
+        self._url_check = "http://{}:{}/v1/vision/face/recognize".format(
             ip_address, port)
         self._camera = camera_entity
         if name:
@@ -81,20 +80,24 @@ class FaceClassifyEntity(ImageProcessingFaceEntity):
         else:
             camera_name = split_entity_id(camera_entity)[1]
             self._name = "{} {}".format(CLASSIFIER, camera_name)
-        self.predictions = {}
+        self._matched = {}
+        self._response_time = None  # The response time from the server
 
     def process_image(self, image):
         """Process an image."""
+        start_time = time.time()
         response = post_image(
             self._url_check, image)
+        end_time = time.time()
+        self._response_time = round(end_time - start_time, 1)
         if response:
             if response.status_code == HTTP_OK:
                 predictions_json = response.json()["predictions"]
-                self.predictions = get_genders(predictions_json)
+                self._matched = get_matched_faces(predictions_json)
                 self.total_faces = len(predictions_json)
         else:
             self.total_faces = None
-            self.predictions = {}
+            self._matched = {}
 
     @property
     def camera_entity(self):
@@ -109,5 +112,9 @@ class FaceClassifyEntity(ImageProcessingFaceEntity):
     @property
     def device_state_attributes(self):
         """Return the classifier attributes."""
-        return self.predictions
+        return {
+            'matched_faces': self._matched,
+            'total_matched_faces': len(self._matched),
+            'response time (sec)': self._response_time
+        }
 

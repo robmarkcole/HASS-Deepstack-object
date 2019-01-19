@@ -8,15 +8,16 @@ sudo docker pull deepquestai/deepstack
 **GPU users** Note that if your machine has an Nvidia GPU you can get a 5 x 20 times performance boost by using the GPU, [read the docs here](https://deepstackpython.readthedocs.io/en/latest/gpuinstall.html#gpuinstall).
 
 ## Home Assistant setup
-Place the `custom_components` folder in your configuration directory (or add its contents to an existing `custom_components` folder). Then configure face recognition and/or object detection.
+Place the `custom_components` folder in your configuration directory (or add its contents to an existing `custom_components` folder). Then configure face recognition and/or object detection. Note that at we use `scan_interval` to (optionally) limit computation, [as described here](https://www.home-assistant.io/components/image_processing/#scan_interval-and-optimising-resources).
 
-## Face detection
-Deepstack [face detection](https://deepstackpython.readthedocs.io/en/latest/facedetection.html) detects faces and their gender. On you machine with docker, run Deepstack with the face detection service active on port `5000`:
+## Face recognition
+Deepstack [face recognition](https://deepstackpython.readthedocs.io/en/latest/facerecognition.html) counts faces and will recognise them if you have trained your Deepstack. On you machine with docker, run Deepstack with the face recognition service active on port `5000`:
 ```
 sudo docker run -e VISION-FACE=True -v localstorage:/datastore -p 5000:5000 deepquestai/deepstack
 ```
 
-The `deepstack_face` component adds an `image_processing` entity where the state of the entity is the total number of faces that are found in the camera image. The gender of faces is listed in the entity attributes.
+The `deepstack_face` component adds an `image_processing` entity where the state of the entity is the total number of faces that are found in the camera image. Recognised faces are listed in the entity `matched faces
+` attribute.
 
 Add to your Home-Assistant config:
 ```yaml
@@ -24,6 +25,7 @@ image_processing:
   - platform: deepstack_face
     ip_address: localhost
     port: 5000
+    scan_interval: 20000
     source:
       - entity_id: camera.local_file
         name: face_counter
@@ -56,6 +58,7 @@ image_processing:
   - platform: deepstack_object
     ip_address: localhost
     port: 5000
+    scan_interval: 20000
     target: person
     source:
       - entity_id: camera.local_file
@@ -111,6 +114,25 @@ A3: The Home Assistant developers team are currently figuring out how bounding b
 Q4: Will Deepstack always be free, if so how do these guys make a living?
 
 A4: I'm informed there will always be a basic free version with preloaded models, while there will be an enterprise version with advanced features such as custom models and endpoints, which will be subscription based.
+
+------
+
+Q5: What are the minimum hardware requirements for running Deepstack?
+
+A5. Based on my experience, I would allow 0.5 GB RAM per model.
+
+------
+
+Q6: Whats security like on the Deepstack container? Auth, SSL?
+
+A6: None yet, the Deepstack team are working on it.
+
+------
+
+Q7: Can object detection be configured to detect car/car colour?
+
+A7: The list of detected object classes is at the end of the page [here](https://deepstackpython.readthedocs.io/en/latest/objectdetection.html). There is no support for detecting the colour of an object.
+
 
 ### Docker tips
 * Add the `-d` flag to run the container in background, thanks [@arsaboo](https://github.com/arsaboo)
