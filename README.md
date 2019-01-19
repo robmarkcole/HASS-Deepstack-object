@@ -8,7 +8,7 @@ sudo docker pull deepquestai/deepstack
 **GPU users** Note that if your machine has an Nvidia GPU you can get a 5 x 20 times performance boost by using the GPU, [read the docs here](https://deepstackpython.readthedocs.io/en/latest/gpuinstall.html#gpuinstall).
 
 ## Home Assistant setup
-Place the `custom_components` folder in your configuration directory (or add its contents to an existing `custom_components` folder). Then configure face recognition and/or object detection.
+Place the `custom_components` folder in your configuration directory (or add its contents to an existing `custom_components` folder). Then configure face recognition and/or object detection. Note that at we use `scan_interval` to (optionally) limit computation, [as described here](https://www.home-assistant.io/components/image_processing/#scan_interval-and-optimising-resources).
 
 ## Face detection
 Deepstack [face detection](https://deepstackpython.readthedocs.io/en/latest/facedetection.html) detects faces and their gender. On you machine with docker, run Deepstack with the face detection service active on port `5000`:
@@ -24,6 +24,7 @@ image_processing:
   - platform: deepstack_face
     ip_address: localhost
     port: 5000
+    scan_interval: 20000
     source:
       - entity_id: camera.local_file
         name: face_counter
@@ -56,6 +57,7 @@ image_processing:
   - platform: deepstack_object
     ip_address: localhost
     port: 5000
+    scan_interval: 20000
     target: person
     source:
       - entity_id: camera.local_file
