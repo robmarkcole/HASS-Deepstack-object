@@ -87,8 +87,9 @@ def register_face(url, name, file_path):
         else:
             _LOGGER.error("%s error : %s", CLASSIFIER, response.json())
 
-    except Exception as exc:
-        _LOGGER.warning("%s error : %s", CLASSIFIER, exc)
+    except requests.exceptions.ConnectionError:
+        _LOGGER.error("ConnectionError: Is %s running?", CLASSIFIER)
+        return None
 
 
 def valid_file_path(file_path):
