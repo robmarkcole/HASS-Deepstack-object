@@ -11,7 +11,9 @@ sudo docker pull deepquestai/deepstack
 Place the `custom_components` folder in your configuration directory (or add its contents to an existing `custom_components` folder). Then configure face recognition and/or object detection. Note that at we use `scan_interval` to (optionally) limit computation, [as described here](https://www.home-assistant.io/components/image_processing/#scan_interval-and-optimising-resources).
 
 ## Face recognition
-Deepstack [face recognition](https://deepstackpython.readthedocs.io/en/latest/facerecognition.html) counts faces and will recognise them if you have trained your Deepstack. On you machine with docker, run Deepstack with the face recognition service active on port `5000`:
+Deepstack [face recognition](https://deepstackpython.readthedocs.io/en/latest/facerecognition.html) counts faces and will recognise them if you have trained your Deepstack using the `deepstack_teach_face` service.
+
+On you machine with docker, run Deepstack with the face recognition service active on port `5000`:
 ```
 sudo docker run -e VISION-FACE=True -v localstorage:/datastore -p 5000:5000 deepquestai/deepstack
 ```
@@ -35,6 +37,18 @@ Configuration variables:
 - **port**: the port of your deepstack instance.
 - **source**: Must be a camera.
 - **name**: (Optional) A custom name for the the entity.
+
+#### Service `deepstack_teach_face`
+This service is for teaching (or [registering](https://deepstackpython.readthedocs.io/en/latest/facerecognition.html#face-registeration)) faces with deepstack, so that they can be recognised.
+
+Example valid service data:
+```
+{
+  "name": "superman",
+  "file_path": "/Users/robincole/.homeassistant/images/superman_1.jpeg"
+}
+```
+
 
 <p align="center">
 <img src="https://github.com/robmarkcole/HASS-Deepstack/blob/master/docs/face_usage.png" width="500">
