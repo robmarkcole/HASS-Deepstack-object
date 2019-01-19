@@ -115,5 +115,24 @@ Q4: Will Deepstack always be free, if so how do these guys make a living?
 
 A4: I'm informed there will always be a basic free version with preloaded models, while there will be an enterprise version with advanced features such as custom models and endpoints, which will be subscription based.
 
+------
+
+Q5: What are the minimum hardware requirements for running Deepstack?
+
+A5. Based on my experience, I would allow 0.5 GB RAM per model.
+
+------
+
+Q6: Whats security like on the Deepstack container? Auth, SSL?
+
+A6: None yet, the Deepstack team are working on it.
+
+------
+
+Q7: Can object detection be configured to detect car/car colour?
+
+A7: The list of detected object classes is at the end of the page [here](https://deepstackpython.readthedocs.io/en/latest/objectdetection.html). There is no support for detecting the colour of an object.
+
+
 ### Docker tips
 * Add the `-d` flag to run the container in background, thanks [@arsaboo](https://github.com/arsaboo)
