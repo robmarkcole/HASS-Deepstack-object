@@ -36,6 +36,16 @@ Configuration variables:
 - **source**: Must be a camera.
 - **name**: (Optional) A custom name for the the entity.
 
+## Teach service
+Example service data:
+```
+{
+  "name": "superman",
+  "file_path": "/Users/robincole/.homeassistant/images/superman_1.jpeg"
+}
+```
+
+
 <p align="center">
 <img src="https://github.com/robmarkcole/HASS-Deepstack/blob/master/docs/face_usage.png" width="500">
 </p>
