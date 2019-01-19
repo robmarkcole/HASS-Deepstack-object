@@ -37,11 +37,11 @@ Configuration variables:
 - **name**: (Optional) A custom name for the the entity.
 
 <p align="center">
-<img src="https://github.com/robmarkcole/HASS-Deepstack/blob/master/docs/usage.png" width="500">
+<img src="https://github.com/robmarkcole/HASS-Deepstack/blob/master/docs/face_usage.png" width="500">
 </p>
 
 <p align="center">
-<img src="https://github.com/robmarkcole/HASS-Deepstack/blob/master/docs/detail.png" width="350">
+<img src="https://github.com/robmarkcole/HASS-Deepstack/blob/master/docs/face_detail.png" width="350">
 </p>
 
 ## Object Detection
