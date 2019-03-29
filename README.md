@@ -108,6 +108,9 @@ sudo docker run -e VISION-DETECTION=True -e VISION-FACE=True -v localstorage:/da
 ### Support
 For code related issues such as suspected bugs, please open an issue on this repo. For general chat or to discuss Home Assistant specific issues related to configuration or use cases, please [use this thread on the Home Assistant forums](https://community.home-assistant.io/t/face-and-person-detection-with-deepstack-local-and-free/92041).
 
+### Docker tips
+Add the `-d` flag to run the container in background, thanks [@arsaboo](https://github.com/arsaboo).
+
 ### FAQ
 Q1: I get the following warning, is this normal?
 ```
@@ -155,7 +158,6 @@ A7: The list of detected object classes is at the end of the page [here](https:/
 
 Q8: If I teach (register) a face do I need to re-teach if I restart the container?
 
-A8: So long as you have run the container including `-v localstorage:/datastore` then you do not need to re-teach, as data is persisted between restarts
+A8: So long as you have run the container including `-v localstorage:/datastore` then you do not need to re-teach, as data is persisted between restarts.
 
-### Docker tips
-* Add the `-d` flag to run the container in background, thanks [@arsaboo](https://github.com/arsaboo)
+------

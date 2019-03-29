@@ -191,6 +191,11 @@ class FaceClassifyEntity(ImageProcessingFaceEntity):
         return self._name
 
     @property
+    def state(self):
+        """Ensure consistent state."""
+        return self.total_faces
+
+    @property
     def device_state_attributes(self):
         """Return the classifier attributes."""
         return {
