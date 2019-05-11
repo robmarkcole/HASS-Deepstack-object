@@ -8,6 +8,18 @@ sudo docker pull deepquestai/deepstack
 
 **GPU users** Note that if your machine has an Nvidia GPU you can get a 5 x 20 times performance boost by using the GPU, [read the docs here](https://deepstackpython.readthedocs.io/en/latest/gpuinstall.html#gpuinstall).
 
+**Legacy machine users** If you are using a machine that doesn't support avx or you are having issues with making requests, Deepstack has a specific build for these systems. Use `deepquestai/deepstack:noavx` instead of `deepquestai/deepstack` when you are installing or running Deepstack.
+
+## Activating the API
+Before you get started, you will need to activate the Deepstack API. First, go to www.deepstack.cc and sign up for an account. Choose the basic plan which will give us unlimited access for one installation. You will then see an activation key in your portal.
+
+On your machine with docker, run Deepstack without any recognition so you can activate the API on port `5000`:
+```
+sudo docker run -v localstorage:/datastore -p 5000:5000 deepquestai/deepstack
+```
+
+Now go to http://YOUR_SERVER_IP_ADDRESS:5000/ on another computer or the same one running Deepstack. Input your activation key from your portal into the text box below "Enter New Activation Key" and press enter. Now stop your docker container. You are now ready to start using Deepstack!
+
 ## Home Assistant setup
 Place the `custom_components` folder in your configuration directory (or add its contents to an existing `custom_components` folder). Then configure face recognition and/or object detection. Note that at we use `scan_interval` to (optionally) limit computation, [as described here](https://www.home-assistant.io/components/image_processing/#scan_interval-and-optimising-resources).
 
