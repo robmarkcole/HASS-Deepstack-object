@@ -1,5 +1,5 @@
 """
-Component that will perform facial detection and identification via deepstack.
+Component that will perform object detection and identification via deepstack.
 
 For more details about this platform, please refer to the documentation at
 https://home-assistant.io/components/image_processing.deepstack_object
@@ -25,7 +25,10 @@ _LOGGER = logging.getLogger(__name__)
 
 CLASSIFIER = 'deepstack_object'
 CONF_TARGET = 'target'
+CONFIDENCE = 'confidence'
 DEFAULT_TARGET = 'person'
+EVENT_OBJECT_DETECTED = 'image_processing.object_detected'
+OBJECT = 'object'
 
 
 PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
@@ -115,11 +118,25 @@ class ObjectClassifyEntity(ImageProcessingEntity):
                 predictions_json = response.json()["predictions"]
                 self._state = get_object_instances(
                     predictions_json, self._target)
-                self._predictions = get_objects_summary(predictions_json)          
+                self._predictions = get_objects_summary(predictions_json)
+                self.fire_events(predictions_json)
 
         else:
             self._state = None
             self._predictions = {}
+
+    def fire_events(self, predictions_json):
+        """Fire events based on predictions"""
+        
+        for prediction in predictions_json:
+            self.hass.bus.fire(
+                EVENT_OBJECT_DETECTED, {
+                'classifier': CLASSIFIER,
+                ATTR_ENTITY_ID: self.entity_id,
+                OBJECT: prediction['label'],
+                CONFIDENCE: prediction['confidence'],
+                })
+
 
     @property
     def camera_entity(self):

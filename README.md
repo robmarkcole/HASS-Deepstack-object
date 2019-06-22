@@ -77,7 +77,7 @@ Deepstack [object detection](https://deepstackpython.readthedocs.io/en/latest/ob
 sudo docker run -e VISION-DETECTION=True -v localstorage:/datastore -p 5000:5000 deepquestai/deepstack
 ```
 
-The `deepstack_object` component adds an `image_processing` entity where the state of the entity is the total number of `target` objects that are found in the camera image. The class and number objects of each class is listed in the entity attributes.
+The `deepstack_object` component adds an `image_processing` entity where the state of the entity is the total number of `target` objects that are found in the camera image. The class and number objects of each class is listed in the entity attributes. An event `image_processing.object_detected` is fired for each object detected.
 
 Add to your Home-Assistant config:
 ```yaml
@@ -105,6 +105,31 @@ Configuration variables:
 <p align="center">
 <img src="https://github.com/robmarkcole/HASS-Deepstack/blob/master/docs/object_detail.png" width="350">
 </p>
+
+#### Event `image_processing.object_detected`
+An event `image_processing.object_detected` is fired for each object detected. The event payload includes:
+- `classifier` : the classifier (i.e. `deepstack_object`)
+- `entity_id` : the entity id responsible for the event
+- `object` : the object detected
+- `confidence` : the confidence in detection in the range 0 - 1 where 1 is 100% confidence.
+
+An example automation using the event is given below:
+
+```yaml
+- action:
+  - data_template:
+      title: "New object detection"
+      message: "{{ trigger.event.data.object }} with confidence {{ trigger.event.data.confidence }}"
+    service: notify.pushbullet
+  alias: Object detection automation
+  condition: []
+  id: '1120092824622'
+  trigger:
+  - platform: event
+    event_type: image_processing.object_detected
+    event_data:
+      object: person
+```
 
 ### Face & Object detection
 Overall detection can be improved by running both face and object detection, but beware this results in significant memory usage. Configure the two components as above and run Deepstack with:
