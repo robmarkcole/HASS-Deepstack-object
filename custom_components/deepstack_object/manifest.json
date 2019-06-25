@@ -2,7 +2,7 @@
         "domain": "deepstack_object",
         "name": "deepstack_object custom component",
         "documentation": "https://github.com/robmarkcole/HASS-Deepstack",
-        "requirements": [],
+        "requirements": ["pillow"],
         "dependencies": [],
         "codeowners": ["@robmarkcole"]
 }

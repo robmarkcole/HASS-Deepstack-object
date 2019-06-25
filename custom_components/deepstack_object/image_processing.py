@@ -38,6 +38,17 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
 })
 
 
+def get_bounding_box(prediction):
+    """
+    Returns the bounding box array from a prediction payload.
+    """
+    x1 = prediction['x_min']
+    x2 = prediction['x_max']
+    y1 = prediction['y_min']
+    y2 = prediction['y_max']
+    return [x1, y1, x2, y2]
+
+
 def get_object_classes(predictions):
     """
     Get a list of the unique object classes predicted.
@@ -108,6 +119,8 @@ class ObjectClassifyEntity(ImageProcessingEntity):
             self._name = "{} {}".format(CLASSIFIER, camera_name)
         self._state = None
         self._predictions = {}
+        self._should_save_image = True
+        self._save_image_directory = '/Users/robincole/.homeassistant/images/'
 
     def process_image(self, image):
         """Process an image."""
@@ -120,6 +133,10 @@ class ObjectClassifyEntity(ImageProcessingEntity):
                     predictions_json, self._target)
                 self._predictions = get_objects_summary(predictions_json)
                 self.fire_events(predictions_json)
+                if self._should_save_image:
+                    self.save_image(
+                        image, predictions_json, self._target, self._save_image_directory)
+
 
         else:
             self._state = None
@@ -136,6 +153,23 @@ class ObjectClassifyEntity(ImageProcessingEntity):
                 OBJECT: prediction['label'],
                 CONFIDENCE: prediction['confidence'],
                 })
+
+    def save_image(self, image, predictions_json, target, directory):
+        from PIL import Image, ImageDraw
+        import io
+        img = Image.open(io.BytesIO(bytearray(image))).convert('RGB')
+        draw = ImageDraw.Draw(img)
+
+        for prediction in predictions_json:
+            if prediction['label'] == target:
+                draw.rectangle(get_bounding_box(prediction), outline='red')
+
+        save_path = directory + 'test.jpg'
+        try:
+            img.save(save_path)
+            _LOGGER.info("Saved bounding box image to %s", save_path)
+        except Exception as exc:
+            _LOGGER.error("Error saving bounding box image : %s", exc)
 
 
     @property
