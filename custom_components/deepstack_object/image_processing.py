@@ -5,6 +5,7 @@ For more details about this platform, please refer to the documentation at
 https://home-assistant.io/components/image_processing.deepstack_object
 """
 import base64
+import datetime
 import logging
 
 import requests
@@ -164,7 +165,8 @@ class ObjectClassifyEntity(ImageProcessingEntity):
             if prediction['label'] == target:
                 draw.rectangle(get_bounding_box(prediction), outline='red')
 
-        save_path = directory + 'test.jpg'
+        now = datetime.datetime.now().strftime('%Y-%m-%d-%H-%M-%S')
+        save_path = directory + 'deepstack_{}_{}.jpg'.format(target, now)
         try:
             img.save(save_path)
             _LOGGER.info("Saved bounding box image to %s", save_path)
