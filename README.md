@@ -85,7 +85,7 @@ image_processing:
     ip_address: localhost
     port: 5000
     scan_interval: 20000
-    save_file_folder: /config/www/front_door
+    save_file_folder: /config/www/deepstack_person_images
     target: person
     source:
       - entity_id: camera.local_file

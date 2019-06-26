@@ -7,6 +7,7 @@ https://home-assistant.io/components/image_processing.deepstack_object
 import base64
 import datetime
 import logging
+import os
 
 import requests
 import voluptuous as vol
@@ -99,6 +100,10 @@ def setup_platform(hass, config, add_devices, discovery_info=None):
     port = config.get(CONF_PORT)
     target = config.get(CONF_TARGET)
     save_file_folder = config.get(CONF_SAVE_FILE_FOLDER)
+
+    if save_file_folder:
+        save_file_folder = os.path.join(
+            save_file_folder, '')  # If no trailing / add it
 
     entities = []
     for camera in config[CONF_SOURCE]:
