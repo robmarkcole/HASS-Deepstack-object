@@ -29,6 +29,8 @@ CONF_TARGET = 'target'
 CONFIDENCE = 'confidence'
 DEFAULT_TARGET = 'person'
 EVENT_OBJECT_DETECTED = 'image_processing.object_detected'
+EVENT_FILE_SAVED = 'image_processing.file_saved'
+FILE_PATH = 'file_path'
 OBJECT = 'object'
 
 
@@ -127,35 +129,24 @@ class ObjectClassifyEntity(ImageProcessingEntity):
         """Process an image."""
         response = post_image(
             self._url_check, image)
+
         if response:
             if response.status_code == HTTP_OK:
                 predictions_json = response.json()["predictions"]
                 self._state = get_object_instances(
                     predictions_json, self._target)
                 self._predictions = get_objects_summary(predictions_json)
-                self.fire_events(predictions_json)
+                self.fire_prediction_events(predictions_json)
                 if self._should_save_image:
                     self.save_image(
                         image, predictions_json, self._target, self._save_image_directory)
-
 
         else:
             self._state = None
             self._predictions = {}
 
-    def fire_events(self, predictions_json):
-        """Fire events based on predictions"""
-        
-        for prediction in predictions_json:
-            self.hass.bus.fire(
-                EVENT_OBJECT_DETECTED, {
-                'classifier': CLASSIFIER,
-                ATTR_ENTITY_ID: self.entity_id,
-                OBJECT: prediction['label'],
-                CONFIDENCE: prediction['confidence'],
-                })
-
     def save_image(self, image, predictions_json, target, directory):
+        """Save a timestamped image with bounding boxes around targets."""
         from PIL import Image, ImageDraw
         import io
         img = Image.open(io.BytesIO(bytearray(image))).convert('RGB')
@@ -169,10 +160,31 @@ class ObjectClassifyEntity(ImageProcessingEntity):
         save_path = directory + 'deepstack_{}_{}.jpg'.format(target, now)
         try:
             img.save(save_path)
+            self.fire_saved_file_event(save_path)
             _LOGGER.info("Saved bounding box image to %s", save_path)
         except Exception as exc:
             _LOGGER.error("Error saving bounding box image : %s", exc)
 
+    def fire_prediction_events(self, predictions_json):
+        """Fire events based on predictions"""
+
+        for prediction in predictions_json:
+            self.hass.bus.fire(
+                EVENT_OBJECT_DETECTED, {
+                    'classifier': CLASSIFIER,
+                    ATTR_ENTITY_ID: self.entity_id,
+                    OBJECT: prediction['label'],
+                    CONFIDENCE: prediction['confidence'],
+                })
+
+    def fire_saved_file_event(self, save_path):
+        """Fire event when saving a file"""
+        self.hass.bus.fire(
+            EVENT_FILE_SAVED, {
+                'classifier': CLASSIFIER,
+                ATTR_ENTITY_ID: self.entity_id,
+                FILE_PATH: save_path
+                })
 
     @property
     def camera_entity(self):
