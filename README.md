@@ -94,7 +94,7 @@ image_processing:
 Configuration variables:
 - **ip_address**: the ip address of your deepstack instance.
 - **port**: the port of your deepstack instance.
-- **save_file_folder**: (Optional) The folder to save processed images to.
+- **save_file_folder**: (Optional) The folder to save processed images to. Note that folder path must be added to [whitelist_external_dirs](https://www.home-assistant.io/docs/configuration/basic/)
 - **source**: Must be a camera.
 - **target**: The target object class, default `person`.
 - **name**: (Optional) A custom name for the the entity.
@@ -134,7 +134,6 @@ An example automation using the `image_processing.object_detected` event is give
 ```
 
 #### Event `image_processing.file_saved`
-
 If `save_file_folder` is configured, an image will be saved with bounding boxes of detected `target` objects. On saving this image a `image_processing.file_saved` event is fired, with a payload that includes:
 
 - `classifier` : the classifier (i.e. `deepstack_object`)

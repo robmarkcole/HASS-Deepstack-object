@@ -26,11 +26,12 @@ _LOGGER = logging.getLogger(__name__)
 
 CLASSIFIER = 'deepstack_object'
 CONF_TARGET = 'target'
+CONF_SAVE_FILE_FOLDER = 'save_file_folder'
 CONFIDENCE = 'confidence'
 DEFAULT_TARGET = 'person'
 EVENT_OBJECT_DETECTED = 'image_processing.object_detected'
 EVENT_FILE_SAVED = 'image_processing.file_saved'
-FILE_PATH = 'file_path'
+FILE = 'file'
 OBJECT = 'object'
 
 
@@ -38,6 +39,7 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
     vol.Required(CONF_IP_ADDRESS): cv.string,
     vol.Required(CONF_PORT): cv.port,
     vol.Optional(CONF_TARGET, default=DEFAULT_TARGET): cv.string,
+    vol.Optional(CONF_SAVE_FILE_FOLDER): cv.isdir,
 })
 
 
@@ -93,13 +95,15 @@ def post_image(url, image):
 
 def setup_platform(hass, config, add_devices, discovery_info=None):
     """Set up the classifier."""
-    ip_address = config[CONF_IP_ADDRESS]
-    port = config[CONF_PORT]
-    target = config[CONF_TARGET]
+    ip_address = config.get(CONF_IP_ADDRESS)
+    port = config.get(CONF_PORT)
+    target = config.get(CONF_TARGET)
+    save_file_folder = config.get(CONF_SAVE_FILE_FOLDER)
+
     entities = []
     for camera in config[CONF_SOURCE]:
         object_entity = ObjectClassifyEntity(
-            ip_address, port, target, 
+            ip_address, port, target, save_file_folder,
             camera[CONF_ENTITY_ID], camera.get(CONF_NAME))
         entities.append(object_entity)
     add_devices(entities)
@@ -108,7 +112,7 @@ def setup_platform(hass, config, add_devices, discovery_info=None):
 class ObjectClassifyEntity(ImageProcessingEntity):
     """Perform a face classification."""
 
-    def __init__(self, ip_address, port, target, camera_entity, name=None):
+    def __init__(self, ip_address, port, target, save_file_folder, camera_entity, name=None):
         """Init with the API key and model id."""
         super().__init__()
         self._url_check = "http://{}:{}/v1/vision/detection".format(
@@ -122,8 +126,8 @@ class ObjectClassifyEntity(ImageProcessingEntity):
             self._name = "{} {}".format(CLASSIFIER, camera_name)
         self._state = None
         self._predictions = {}
-        self._should_save_image = True
-        self._save_image_directory = '/Users/robincole/.homeassistant/images/'
+        if save_file_folder:
+            self._save_file_folder = save_file_folder
 
     def process_image(self, image):
         """Process an image."""
@@ -137,9 +141,9 @@ class ObjectClassifyEntity(ImageProcessingEntity):
                     predictions_json, self._target)
                 self._predictions = get_objects_summary(predictions_json)
                 self.fire_prediction_events(predictions_json)
-                if self._should_save_image:
+                if hasattr(self, "_save_file_folder"):
                     self.save_image(
-                        image, predictions_json, self._target, self._save_image_directory)
+                        image, predictions_json, self._target, self._save_file_folder)
 
         else:
             self._state = None
@@ -183,7 +187,7 @@ class ObjectClassifyEntity(ImageProcessingEntity):
             EVENT_FILE_SAVED, {
                 'classifier': CLASSIFIER,
                 ATTR_ENTITY_ID: self.entity_id,
-                FILE_PATH: save_path
+                FILE: save_path
                 })
 
     @property
@@ -207,5 +211,7 @@ class ObjectClassifyEntity(ImageProcessingEntity):
         attr = {}
         attr['target'] = self._target
         attr['predictions'] = self._predictions
+        if hasattr(self, "_save_file_folder"):
+            attr['save_file_folder'] = self._save_file_folder
         return attr
 
