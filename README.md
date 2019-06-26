@@ -157,7 +157,7 @@ An example automation using the `image_processing.file_saved` event is given bel
 ```
 
 <p align="center">
-<img src="https://github.com/robmarkcole/HASS-Deepstack/blob/adds_save_image/docs/notification.jpg" width="350">
+<img src="https://github.com/robmarkcole/HASS-Deepstack/blob/master/docs/notification.jpg" width="350">
 </p>
 
 ### Face & Object detection
