@@ -1,0 +1,5 @@
+## Automations
+I am using a pair of automations with this component. The first is triggered by a PIR on my front door and kicks off a [python_script](https://www.home-assistant.io/components/python_script/) to save a time-stamped image from my blink camera and set-off image processing with this component. 
+The second automation is triggered by the `image_processing.file_saved` event that this component fires, and kicks off a python_script that sends the saved image via telegram. Note that I am using the `url` of the file as my Home Assistant instance is running in Docker and I cannot use a `file` path.
+
+You might ask why I am using `python_scripts` rather than keeping all logic within `automations.yaml`. There are 2 reasons. (1) I prefer writing python over yaml, and (2) if is not necessary to do any reloading in HA as changes to `python_scripts` instantly take effect.
