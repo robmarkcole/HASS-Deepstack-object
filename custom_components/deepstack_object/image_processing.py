@@ -146,7 +146,7 @@ class ObjectClassifyEntity(ImageProcessingEntity):
                     predictions_json, self._target)
                 self._predictions = get_objects_summary(predictions_json)
                 self.fire_prediction_events(predictions_json)
-                if hasattr(self, "_save_file_folder"):
+                if hasattr(self, "_save_file_folder") and self._state > 0:
                     self.save_image(
                         image, predictions_json, self._target, self._save_file_folder)
 
@@ -168,6 +168,7 @@ class ObjectClassifyEntity(ImageProcessingEntity):
         now = datetime.datetime.now().strftime('%Y-%m-%d-%H-%M-%S')
         save_path = directory + 'deepstack_{}_{}.jpg'.format(target, now)
         try:
+            img.save(directory + 'deepstack_latest_{}.jpg'.format(target))
             img.save(save_path)
             self.fire_saved_file_event(save_path)
             _LOGGER.info("Saved bounding box image to %s", save_path)

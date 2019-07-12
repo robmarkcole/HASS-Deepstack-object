@@ -76,7 +76,7 @@ Deepstack [object detection](https://deepstackpython.readthedocs.io/en/latest/ob
 sudo docker run -e VISION-DETECTION=True -v localstorage:/datastore -p 5000:5000 deepquestai/deepstack
 ```
 
-The `deepstack_object` component adds an `image_processing` entity where the state of the entity is the total number of `target` objects that are found in the camera image. The class and number objects of each class is listed in the entity attributes. An event `image_processing.object_detected` is fired for each object detected.
+The `deepstack_object` component adds an `image_processing` entity where the state of the entity is the total number of `target` objects that are found in the camera image. The class and number objects of each class is listed in the entity attributes. An event `image_processing.object_detected` is fired for each object detected. Optionally the processed image can be saved to disk. If `save_file_folder` is configured two images are created, one with the filename of format `deepstack_latest_{target}.jpg` which is over-written on each new detection of the `target`, and another with a unique filename including the timestamp.
 
 Add to your Home-Assistant config:
 ```yaml
@@ -94,7 +94,7 @@ image_processing:
 Configuration variables:
 - **ip_address**: the ip address of your deepstack instance.
 - **port**: the port of your deepstack instance.
-- **save_file_folder**: (Optional) The folder to save processed images to. Note that folder path must be added to [whitelist_external_dirs](https://www.home-assistant.io/docs/configuration/basic/)
+- **save_file_folder**: (Optional) The folder to save processed images to. Note that folder path should be added to [whitelist_external_dirs](https://www.home-assistant.io/docs/configuration/basic/)
 - **source**: Must be a camera.
 - **target**: The target object class, default `person`.
 - **name**: (Optional) A custom name for the the entity.
@@ -134,7 +134,7 @@ An example automation using the `image_processing.object_detected` event is give
 ```
 
 #### Event `image_processing.file_saved`
-If `save_file_folder` is configured, an image will be saved with bounding boxes of detected `target` objects. On saving this image a `image_processing.file_saved` event is fired, with a payload that includes:
+If `save_file_folder` is configured, an new image will be saved with bounding boxes of detected `target` objects, and the filename will include the time of the image capture. On saving this image a `image_processing.file_saved` event is fired, with a payload that includes:
 
 - `classifier` : the classifier (i.e. `deepstack_object`)
 - `entity_id` : the entity id responsible for the event
@@ -159,6 +159,14 @@ An example automation using the `image_processing.file_saved` event is given bel
 <p align="center">
 <img src="https://github.com/robmarkcole/HASS-Deepstack/blob/master/docs/notification.jpg" width="350">
 </p>
+
+The second image created on new detections has a fixed filename to make it easy to display with the [local_file](https://www.home-assistant.io/components/local_file/) camera. An example configuration is:
+```yaml
+camera:
+  - platform: local_file
+    file_path: /Users/robincole/.homeassistant/images/deepstack/deepstack_latest_person.jpg
+    name: deepstack_latest_person
+```
 
 ### Face & Object detection
 Overall detection can be improved by running both face and object detection, but beware this results in significant memory usage. Configure the two components as above and run Deepstack with:
