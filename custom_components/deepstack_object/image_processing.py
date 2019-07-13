@@ -44,15 +44,12 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
 })
 
 
-def get_bounding_box(prediction):
-    """
-    Returns the bounding box array from a prediction payload.
-    """
-    x1 = prediction['x_min']
-    x2 = prediction['x_max']
-    y1 = prediction['y_min']
-    y2 = prediction['y_max']
-    return [x1, y1, x2, y2]
+def draw_box(draw, prediction, color=(255, 0, 0)):
+    """Draw bounding box on image."""
+    (left, right, top, bottom) = (
+        prediction['x_min'], prediction['x_max'], prediction['y_min'], prediction['y_max'])
+    draw.line([(left, top), (left, bottom), (right, bottom),
+               (right, top), (left, top)], width=5, fill=color)
 
 
 def get_object_classes(predictions):
@@ -163,7 +160,7 @@ class ObjectClassifyEntity(ImageProcessingEntity):
 
         for prediction in predictions_json:
             if prediction['label'] == target:
-                draw.rectangle(get_bounding_box(prediction), outline='red')
+                draw_box(draw, prediction)
 
         now = datetime.datetime.now().strftime('%Y-%m-%d-%H-%M-%S')
         save_path = directory + 'deepstack_{}_{}.jpg'.format(target, now)
