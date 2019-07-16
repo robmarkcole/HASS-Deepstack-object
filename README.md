@@ -29,7 +29,7 @@ Deepstack [object detection](https://deepstackpython.readthedocs.io/en/latest/ob
 sudo docker run -e VISION-DETECTION=True -v localstorage:/datastore -p 5000:5000 deepquestai/deepstack
 ```
 
-The `deepstack_object` component adds an `image_processing` entity where the state of the entity is the total number of `target` objects that are found in the camera image. The class and number objects of each class is listed in the entity attributes. An event `image_processing.object_detected` is fired for each object detected. Optionally the processed image can be saved to disk. If `save_file_folder` is configured two images are created, one with the filename of format `deepstack_latest_{target}.jpg` which is over-written on each new detection of the `target`, and another with a unique filename including the timestamp.
+The `deepstack_object` component adds an `image_processing` entity where the state of the entity is the total number of `target` objects that are above a `confidence` threshold which has a default value of 80%. The class and number of objects of each object detected (any confidence) is listed in the entity attributes. An event `image_processing.object_detected` is fired for each object detected. Optionally the processed image can be saved to disk. If `save_file_folder` is configured two images are created, one with the filename of format `deepstack_latest_{target}.jpg` which is over-written on each new detection of the `target`, and another with a unique filename including the timestamp.
 
 Add to your Home-Assistant config:
 ```yaml
@@ -40,6 +40,7 @@ image_processing:
     scan_interval: 20000
     save_file_folder: /config/www/deepstack_person_images
     target: person
+    confidence: 50
     source:
       - entity_id: camera.local_file
         name: person_detector
@@ -50,6 +51,7 @@ Configuration variables:
 - **save_file_folder**: (Optional) The folder to save processed images to. Note that folder path should be added to [whitelist_external_dirs](https://www.home-assistant.io/docs/configuration/basic/)
 - **source**: Must be a camera.
 - **target**: The target object class, default `person`.
+- **confidence**: (Optional) The confidence (in %) above which detected targets are counted in the sensor state. Default value: 80
 - **name**: (Optional) A custom name for the the entity.
 
 <p align="center">
