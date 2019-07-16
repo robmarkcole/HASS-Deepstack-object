@@ -111,10 +111,6 @@ An example automation using the `image_processing.file_saved` event is given bel
     event_type: image_processing.file_saved
 ```
 
-<p align="center">
-<img src="https://github.com/robmarkcole/HASS-Deepstack-object/blob/master/docs/notification.jpg" width="350">
-</p>
-
 The second image created on new detections has a fixed filename to make it easy to display with the [local_file](https://www.home-assistant.io/components/local_file/) camera. An example configuration is:
 ```yaml
 camera:
