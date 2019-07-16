@@ -112,7 +112,7 @@ An example automation using the `image_processing.file_saved` event is given bel
 ```
 
 <p align="center">
-<img src="https://github.com/robmarkcole/HASS-Deepstack/blob/master/docs/notification.jpg" width="350">
+<img src="https://github.com/robmarkcole/HASS-Deepstack-object/blob/master/docs/notification.jpg" width="350">
 </p>
 
 The second image created on new detections has a fixed filename to make it easy to display with the [local_file](https://www.home-assistant.io/components/local_file/) camera. An example configuration is:
@@ -122,17 +122,6 @@ camera:
     file_path: /Users/robincole/.homeassistant/images/deepstack/deepstack_latest_person.jpg
     name: deepstack_latest_person
 ```
-
-### Face & Object detection
-Overall detection can be improved by running both face and object detection, but beware this results in significant memory usage. Configure the two components as above and run Deepstack with:
-
-```
-sudo docker run -e VISION-DETECTION=True -e VISION-FACE=True -v localstorage:/datastore -p 5000:5000 deepquestai/deepstack
-```
-
-<p align="center">
-<img src="https://github.com/robmarkcole/HASS-Deepstack-object/blob/master/docs/face_and_object_usage.png" width="500">
-</p>
 
 ### Support
 For code related issues such as suspected bugs, please open an issue on this repo. For general chat or to discuss Home Assistant specific issues related to configuration or use cases, please [use this thread on the Home Assistant forums](https://community.home-assistant.io/t/face-and-person-detection-with-deepstack-local-and-free/92041).
@@ -149,38 +138,20 @@ A1: Yes this is normal
 
 ------
 
-Q2: Why are there two custom components and not just one?
+Q2: Will Deepstack always be free, if so how do these guys make a living?
 
-A2: It is easier to maintain two simple components than one complex one.
-
-------
-
-Q3: The API return bounding boxes, why does this component not expose them?
-
-A3: The Home Assistant developers team are currently figuring out how bounding boxes should be handed, please feel free to add your thoughts to [this issue](https://github.com/home-assistant/architecture/issues/133).
+A2: I'm informed there will always be a basic free version with preloaded models, while there will be an enterprise version with advanced features such as custom models and endpoints, which will be subscription based.
 
 ------
 
-Q4: Will Deepstack always be free, if so how do these guys make a living?
+Q3: What are the minimum hardware requirements for running Deepstack?
 
-A4: I'm informed there will always be a basic free version with preloaded models, while there will be an enterprise version with advanced features such as custom models and endpoints, which will be subscription based.
-
-------
-
-Q5: What are the minimum hardware requirements for running Deepstack?
-
-A5. Based on my experience, I would allow 0.5 GB RAM per model.
+A3. Based on my experience, I would allow 0.5 GB RAM per model.
 
 ------
 
-Q6: Whats security like on the Deepstack container? Auth, SSL?
+Q4: Can object detection be configured to detect car/car colour?
 
-A6: None yet, the Deepstack team are working on it.
-
-------
-
-Q7: Can object detection be configured to detect car/car colour?
-
-A7: The list of detected object classes is at the end of the page [here](https://deepstackpython.readthedocs.io/en/latest/objectdetection.html). There is no support for detecting the colour of an object.
+A4: The list of detected object classes is at the end of the page [here](https://deepstackpython.readthedocs.io/en/latest/objectdetection.html). There is no support for detecting the colour of an object.
 
 ------
