@@ -17,7 +17,7 @@ from homeassistant.const import (
 from homeassistant.core import split_entity_id
 import homeassistant.helpers.config_validation as cv
 from homeassistant.components.image_processing import (
-    PLATFORM_SCHEMA, ImageProcessingEntity, CONF_SOURCE,
+    PLATFORM_SCHEMA, ImageProcessingEntity, ATTR_CONFIDENCE, CONF_SOURCE,
     CONF_ENTITY_ID, CONF_NAME, DOMAIN)
 from homeassistant.const import (
     CONF_IP_ADDRESS, CONF_PORT,
@@ -28,7 +28,6 @@ _LOGGER = logging.getLogger(__name__)
 CLASSIFIER = 'deepstack_object'
 CONF_TARGET = 'target'
 CONF_SAVE_FILE_FOLDER = 'save_file_folder'
-CONFIDENCE = 'confidence'
 DEFAULT_TARGET = 'person'
 EVENT_OBJECT_DETECTED = 'image_processing.object_detected'
 EVENT_FILE_SAVED = 'image_processing.file_saved'
@@ -44,12 +43,26 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
 })
 
 
-def draw_box(draw, prediction, color=(255, 0, 0)):
+def draw_box(draw, prediction, text='', color=(255, 0, 0)):
     """Draw bounding box on image."""
     (left, right, top, bottom) = (
         prediction['x_min'], prediction['x_max'], prediction['y_min'], prediction['y_max'])
     draw.line([(left, top), (left, bottom), (right, bottom),
                (right, top), (left, top)], width=5, fill=color)
+    if text:
+        draw.text((left, abs(top-15)), text, fill=color)
+
+
+def format_confidence(confidence):
+    """Takes a confidence from the API like 
+       0.55623 and returne 55.6 (%).
+    """
+    return round(float(confidence)*100, 1)
+
+
+def get_confidences_above_threshold(confidences, threshold):
+    """Takes a list of confidences and returns those above a threshold."""
+    return [val for val in confidences if val >= threshold]
 
 
 def get_object_classes(predictions):
@@ -64,9 +77,9 @@ def get_object_instances(predictions, target):
     """
     Return the number of instances of a target class.
     """
-    targets_identified = [
-        pred for pred in predictions if pred['label'] == target]
-    return len(targets_identified)
+    targets_identified = [format_confidence(
+        pred['confidence']) for pred in predictions if pred['label'] == target]
+    return targets_identified
 
 
 def get_objects_summary(predictions):
@@ -74,7 +87,7 @@ def get_objects_summary(predictions):
     Get a summary of the objects detected.
     """
     classes = get_object_classes(predictions)
-    return {class_cat: get_object_instances(predictions, target=class_cat)
+    return {class_cat: len(get_object_instances(predictions, target=class_cat))
             for class_cat in classes}
 
 
@@ -97,6 +110,7 @@ def setup_platform(hass, config, add_devices, discovery_info=None):
     port = config.get(CONF_PORT)
     target = config.get(CONF_TARGET)
     save_file_folder = config.get(CONF_SAVE_FILE_FOLDER)
+    confidence = config.get(ATTR_CONFIDENCE)
 
     if save_file_folder:
         save_file_folder = os.path.join(
@@ -105,7 +119,7 @@ def setup_platform(hass, config, add_devices, discovery_info=None):
     entities = []
     for camera in config[CONF_SOURCE]:
         object_entity = ObjectClassifyEntity(
-            ip_address, port, target, save_file_folder,
+            ip_address, port, target, confidence, save_file_folder,
             camera[CONF_ENTITY_ID], camera.get(CONF_NAME))
         entities.append(object_entity)
     add_devices(entities)
@@ -114,12 +128,13 @@ def setup_platform(hass, config, add_devices, discovery_info=None):
 class ObjectClassifyEntity(ImageProcessingEntity):
     """Perform a face classification."""
 
-    def __init__(self, ip_address, port, target, save_file_folder, camera_entity, name=None):
+    def __init__(self, ip_address, port, target, confidence, save_file_folder, camera_entity, name=None):
         """Init with the API key and model id."""
         super().__init__()
         self._url_check = "http://{}:{}/v1/vision/detection".format(
             ip_address, port)
         self._target = target
+        self._confidence = confidence
         self._camera = camera_entity
         if name:
             self._name = name
@@ -127,6 +142,7 @@ class ObjectClassifyEntity(ImageProcessingEntity):
             camera_name = split_entity_id(camera_entity)[1]
             self._name = "{} {}".format(CLASSIFIER, camera_name)
         self._state = None
+        self._targets_confidences = []
         self._predictions = {}
         if save_file_folder:
             self._save_file_folder = save_file_folder
@@ -139,8 +155,11 @@ class ObjectClassifyEntity(ImageProcessingEntity):
         if response:
             if response.status_code == HTTP_OK:
                 predictions_json = response.json()["predictions"]
-                self._state = get_object_instances(
+                self._targets_confidences = get_object_instances(
                     predictions_json, self._target)
+                self._state = len(
+                    get_confidences_above_threshold(
+                        self._targets_confidences, self._confidence))
                 self._predictions = get_objects_summary(predictions_json)
                 self.fire_prediction_events(predictions_json)
                 if hasattr(self, "_save_file_folder") and self._state > 0:
@@ -149,6 +168,7 @@ class ObjectClassifyEntity(ImageProcessingEntity):
 
         else:
             self._state = None
+            self._targets_confidences = []
             self._predictions = {}
 
     def save_image(self, image, predictions_json, target, directory):
@@ -159,16 +179,18 @@ class ObjectClassifyEntity(ImageProcessingEntity):
         draw = ImageDraw.Draw(img)
 
         for prediction in predictions_json:
-            if prediction['label'] == target:
-                draw_box(draw, prediction)
+            prediction_confidence = format_confidence(prediction['confidence'])
+            if prediction['label'] == target and prediction_confidence >= self._confidence:
+                draw_box(draw, prediction, str(prediction_confidence))
 
         now = datetime.datetime.now().strftime('%Y-%m-%d-%H-%M-%S')
-        save_path = directory + 'deepstack_{}_{}.jpg'.format(target, now)
+        latest_save_path = directory + 'deepstack_latest_{}.jpg'.format(target)
+        timestamp_save_path = directory + 'deepstack_{}_{}.jpg'.format(target, now)
         try:
-            img.save(directory + 'deepstack_latest_{}.jpg'.format(target))
-            img.save(save_path)
-            self.fire_saved_file_event(save_path)
-            _LOGGER.info("Saved bounding box image to %s", save_path)
+            img.save(latest_save_path)
+            img.save(timestamp_save_path)
+            self.fire_saved_file_event(timestamp_save_path)
+            _LOGGER.info("Saved bounding box image to %s", timestamp_save_path)
         except Exception as exc:
             _LOGGER.error("Error saving bounding box image : %s", exc)
 
@@ -181,7 +203,8 @@ class ObjectClassifyEntity(ImageProcessingEntity):
                     'classifier': CLASSIFIER,
                     ATTR_ENTITY_ID: self.entity_id,
                     OBJECT: prediction['label'],
-                    CONFIDENCE: prediction['confidence'],
+                    ATTR_CONFIDENCE: format_confidence(
+                        prediction['confidence'])
                 })
 
     def fire_saved_file_event(self, save_path):
@@ -213,7 +236,8 @@ class ObjectClassifyEntity(ImageProcessingEntity):
         """Return device specific state attributes."""
         attr = {}
         attr['target'] = self._target
-        attr['predictions'] = self._predictions
+        attr['target_confidences'] = self._targets_confidences
+        attr['all_predictions'] = self._predictions
         if hasattr(self, "_save_file_folder"):
             attr['save_file_folder'] = self._save_file_folder
         return attr
