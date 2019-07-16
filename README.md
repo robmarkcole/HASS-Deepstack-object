@@ -21,7 +21,7 @@ sudo docker run -v localstorage:/datastore -p 5000:5000 deepquestai/deepstack
 Now go to http://YOUR_SERVER_IP_ADDRESS:5000/ on another computer or the same one running Deepstack. Input your activation key from your portal into the text box below "Enter New Activation Key" and press enter. Now stop your docker container. You are now ready to start using Deepstack!
 
 ## Home Assistant setup
-Place the `custom_components` folder in your configuration directory (or add its contents to an existing `custom_components` folder). Then configure face recognition and/or object detection. Note that at we use `scan_interval` to (optionally) limit computation, [as described here](https://www.home-assistant.io/components/image_processing/#scan_interval-and-optimising-resources).
+Place the `custom_components` folder in your configuration directory (or add its contents to an existing `custom_components` folder). Then configure object detection. Note that at we use `scan_interval` to (optionally) limit computation, [as described here](https://www.home-assistant.io/components/image_processing/#scan_interval-and-optimising-resources).
 
 ## Object Detection
 Deepstack [object detection](https://deepstackpython.readthedocs.io/en/latest/objectdetection.html) can identify 80 different kinds of objects, including people (`person`) and animals. On you machine with docker, run Deepstack with the object detection service active on port `5000`:
@@ -55,7 +55,7 @@ Configuration variables:
 - **name**: (Optional) A custom name for the the entity.
 
 <p align="center">
-<img src="https://github.com/robmarkcole/HASS-Deepstack-object/blob/master/docs/object_usage.png" width="800">
+<img src="https://github.com/robmarkcole/HASS-Deepstack-object/blob/master/docs/object_usage.png" width="500">
 </p>
 
 <p align="center">
@@ -118,6 +118,9 @@ camera:
     file_path: /Users/robincole/.homeassistant/images/deepstack/deepstack_latest_person.jpg
     name: deepstack_latest_person
 ```
+
+## Face recognition
+For face recognition with Deepstack use https://github.com/robmarkcole/HASS-Deepstack-face
 
 ### Support
 For code related issues such as suspected bugs, please open an issue on this repo. For general chat or to discuss Home Assistant specific issues related to configuration or use cases, please [use this thread on the Home Assistant forums](https://community.home-assistant.io/t/face-and-person-detection-with-deepstack-local-and-free/92041).
