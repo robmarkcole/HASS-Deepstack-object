@@ -1,8 +1,0 @@
-{
-        "domain": "deepstack_face",
-        "name": "deepstack_face custom component",
-        "documentation": "https://github.com/robmarkcole/HASS-Deepstack",
-        "requirements": [],
-        "dependencies": [],
-        "codeowners": ["@robmarkcole"]
-}
