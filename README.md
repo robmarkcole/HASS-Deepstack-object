@@ -122,6 +122,9 @@ camera:
 ## Face recognition
 For face recognition with Deepstack use https://github.com/robmarkcole/HASS-Deepstack-face
 
+## Google Coral USB stick
+If you have a [Google Coral USB stick](https://coral.withgoogle.com/products/accelerator/) you can use it as a drop in replacement for Deepstack object detection by using the [coral-pi-rest-server](https://github.com/robmarkcole/coral-pi-rest-server). Note that the predictions may differ from those provided by Deepstack.
+
 ### Support
 For code related issues such as suspected bugs, please open an issue on this repo. For general chat or to discuss Home Assistant specific issues related to configuration or use cases, please [use this thread on the Home Assistant forums](https://community.home-assistant.io/t/face-and-person-detection-with-deepstack-local-and-free/92041).
 
