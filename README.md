@@ -18,7 +18,11 @@ On your machine with docker, run Deepstack without any recognition so you can ac
 sudo docker run -v localstorage:/datastore -p 5000:5000 deepquestai/deepstack
 ```
 
-Now go to http://YOUR_SERVER_IP_ADDRESS:5000/ on another computer or the same one running Deepstack. Input your activation key from your portal into the text box below "Enter New Activation Key" and press enter. Now stop your docker container. You are now ready to start using Deepstack!
+Now go to http://YOUR_SERVER_IP_ADDRESS:5000/ on another computer or the same one running Deepstack. Input your activation key from your portal into the text box below "Enter New Activation Key" and press enter. Now stop your docker container. You are now ready to start using Deepstack! To check Deepstack is ready make a request using cURL:
+```
+$ curl -X POST -F image=@development/test-image3.jpg 'http://localhost:5000/v1/vision/detection'
+```
+This should return the predictions for that image.
 
 ## Home Assistant setup
 Place the `custom_components` folder in your configuration directory (or add its contents to an existing `custom_components` folder). Then configure object detection. Note that at we use `scan_interval` to (optionally) limit computation, [as described here](https://www.home-assistant.io/components/image_processing/#scan_interval-and-optimising-resources).

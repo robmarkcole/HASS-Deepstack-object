@@ -19,3 +19,4 @@ bin-release/
 *.pyc
 development/.ipynb_checkpoints/Deepstack face dev-checkpoint.ipynb
 development/.ipynb_checkpoints/Deepstack face dev-checkpoint.ipynb
+.ipynb_checkpoints*
