@@ -161,7 +161,7 @@ class ObjectClassifyEntity(ImageProcessingEntity):
                     get_confidences_above_threshold(
                         self._targets_confidences, self._confidence))
                 self._predictions = get_objects_summary(predictions_json)
-                self.fire_prediction_events(predictions_json)
+                self.fire_prediction_events(predictions_json, self._confidence)
                 if hasattr(self, "_save_file_folder") and self._state > 0:
                     self.save_image(
                         image, predictions_json, self._target, self._save_file_folder)
@@ -194,18 +194,19 @@ class ObjectClassifyEntity(ImageProcessingEntity):
         except Exception as exc:
             _LOGGER.error("Error saving bounding box image : %s", exc)
 
-    def fire_prediction_events(self, predictions_json):
-        """Fire events based on predictions"""
+    def fire_prediction_events(self, predictions_json, confidence):
+        """Fire events based on predictions if above confidence threshold."""
 
         for prediction in predictions_json:
-            self.hass.bus.fire(
-                EVENT_OBJECT_DETECTED, {
-                    'classifier': CLASSIFIER,
-                    ATTR_ENTITY_ID: self.entity_id,
-                    OBJECT: prediction['label'],
-                    ATTR_CONFIDENCE: format_confidence(
-                        prediction['confidence'])
-                })
+            if format_confidence(prediction['confidence']) > confidence:
+                self.hass.bus.fire(
+                    EVENT_OBJECT_DETECTED, {
+                        'classifier': CLASSIFIER,
+                        ATTR_ENTITY_ID: self.entity_id,
+                        OBJECT: prediction['label'],
+                        ATTR_CONFIDENCE: format_confidence(
+                            prediction['confidence'])
+                    })
 
     def fire_saved_file_event(self, save_path):
         """Fire event when saving a file"""

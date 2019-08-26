@@ -67,7 +67,7 @@ Configuration variables:
 </p>
 
 #### Event `image_processing.object_detected`
-An event `image_processing.object_detected` is fired for each object detected. An example use case for this is incrementing a [counter](https://www.home-assistant.io/components/counter/) when a person is detected. The `image_processing.object_detected` event payload includes:
+An event `image_processing.object_detected` is fired for each object detected above the configured `confidence` threshold. An example use case for this is incrementing a [counter](https://www.home-assistant.io/components/counter/) when a person is detected. The `image_processing.object_detected` event payload includes:
 
 - `classifier` : the classifier (i.e. `deepstack_object`)
 - `entity_id` : the entity id responsible for the event
