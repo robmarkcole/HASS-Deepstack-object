@@ -30,7 +30,7 @@ Place the `custom_components` folder in your configuration directory (or add its
 ## Object Detection
 Deepstack [object detection](https://deepstackpython.readthedocs.io/en/latest/objectdetection.html) can identify 80 different kinds of objects, including people (`person`) and animals. On you machine with docker, run Deepstack with the object detection service active on port `5000`:
 ```
-sudo docker run -e VISION-DETECTION=True -v localstorage:/datastore -p 5000:5000 deepquestai/deepstack
+sudo docker run -e VISION-DETECTION=True -e API-KEY="Mysecretkey" -v localstorage:/datastore -p 5000:5000 deepquestai/deepstack
 ```
 
 The `deepstack_object` component adds an `image_processing` entity where the state of the entity is the total number of `target` objects that are above a `confidence` threshold which has a default value of 80%. The class and number of objects of each object detected (any confidence) is listed in the entity attributes. An event `image_processing.object_detected` is fired for each object detected. Optionally the processed image can be saved to disk. If `save_file_folder` is configured two images are created, one with the filename of format `deepstack_latest_{target}.jpg` which is over-written on each new detection of the `target`, and another with a unique filename including the timestamp.
@@ -41,6 +41,8 @@ image_processing:
   - platform: deepstack_object
     ip_address: localhost
     port: 5000
+    api_key: Mysecretkey
+    timeout: 5
     scan_interval: 20000
     save_file_folder: /config/www/deepstack_person_images
     target: person
@@ -52,6 +54,8 @@ image_processing:
 Configuration variables:
 - **ip_address**: the ip address of your deepstack instance.
 - **port**: the port of your deepstack instance.
+- **api_key**: (Optional) Any API key you have set.
+- **timeout**: (Optional, default 10 seconds) The timout for requests to deepstack.
 - **save_file_folder**: (Optional) The folder to save processed images to. Note that folder path should be added to [whitelist_external_dirs](https://www.home-assistant.io/docs/configuration/basic/)
 - **source**: Must be a camera.
 - **target**: The target object class, default `person`.
