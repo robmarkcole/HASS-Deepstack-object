@@ -37,7 +37,9 @@ from homeassistant.const import (
 _LOGGER = logging.getLogger(__name__)
 
 CLASSIFIER = "deepstack_object"
+CONF_API_KEY = "api_key"
 CONF_TARGET = "target"
+CONF_TIMEOUT = "timeout"
 CONF_SAVE_FILE_FOLDER = "save_file_folder"
 DEFAULT_API_KEY = ""
 DEFAULT_TARGET = "person"
@@ -52,6 +54,8 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
     {
         vol.Required(CONF_IP_ADDRESS): cv.string,
         vol.Required(CONF_PORT): cv.port,
+        vol.Optional(CONF_API_KEY, default=DEFAULT_API_KEY): cv.string,
+        vol.Optional(CONF_TIMEOUT, default=DEFAULT_TIMEOUT): cv.positive_int,
         vol.Optional(CONF_TARGET, default=DEFAULT_TARGET): cv.string,
         vol.Optional(CONF_SAVE_FILE_FOLDER): cv.isdir,
     }
@@ -79,7 +83,7 @@ def setup_platform(hass, config, add_devices, discovery_info=None):
     """Set up the classifier."""
     ip_address = config.get(CONF_IP_ADDRESS)
     port = config.get(CONF_PORT)
-    api_key = DEFAULT_API_KEY
+    api_key = config.get(CONF_API_KEY)
     timeout = DEFAULT_TIMEOUT
     target = config.get(CONF_TARGET)
     save_file_folder = config.get(CONF_SAVE_FILE_FOLDER)
