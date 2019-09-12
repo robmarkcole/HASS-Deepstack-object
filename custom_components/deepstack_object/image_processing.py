@@ -154,17 +154,21 @@ class ObjectClassifyEntity(ImageProcessingEntity):
 
         if response:
             if response.status_code == HTTP_OK:
-                predictions_json = response.json()["predictions"]
-                self._targets_confidences = get_object_instances(
-                    predictions_json, self._target)
-                self._state = len(
-                    get_confidences_above_threshold(
-                        self._targets_confidences, self._confidence))
-                self._predictions = get_objects_summary(predictions_json)
-                self.fire_prediction_events(predictions_json, self._confidence)
-                if hasattr(self, "_save_file_folder") and self._state > 0:
-                    self.save_image(
-                        image, predictions_json, self._target, self._save_file_folder)
+                if not response.json()['success']:
+                    _LOGGER.error("Error from Deepstack: %s", response.json()['error'])
+                elif response.json()['success']: # Get 200 code even if incorrect API key
+                    predictions_json = response.json()["predictions"]
+                    self._targets_confidences = get_object_instances(
+                        predictions_json, self._target)
+                    self._state = len(
+                        get_confidences_above_threshold(
+                            self._targets_confidences, self._confidence))
+                    self._predictions = get_objects_summary(predictions_json)
+                    self.fire_prediction_events(predictions_json, self._confidence)
+                    if hasattr(self, "_save_file_folder") and self._state > 0:
+                        self.save_image(
+                            image, predictions_json, self._target, self._save_file_folder)
+                    
 
         else:
             self._state = None
