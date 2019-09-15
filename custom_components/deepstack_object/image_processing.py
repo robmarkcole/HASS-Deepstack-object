@@ -84,7 +84,7 @@ def setup_platform(hass, config, add_devices, discovery_info=None):
     ip_address = config.get(CONF_IP_ADDRESS)
     port = config.get(CONF_PORT)
     api_key = config.get(CONF_API_KEY)
-    timeout = DEFAULT_TIMEOUT
+    timeout = config.get(CONF_TIMEOUT)
     target = config.get(CONF_TARGET)
     save_file_folder = config.get(CONF_SAVE_FILE_FOLDER)
     confidence = config.get(ATTR_CONFIDENCE)
@@ -147,7 +147,7 @@ class ObjectClassifyEntity(ImageProcessingEntity):
         self._targets_confidences = []
         self._predictions = {}
         try:
-            self._dsobject.process_image_bytes(image)
+            self._dsobject.detect(image)
         except ds.DeepstackException as exc:
             _LOGGER.error("Depstack error : %s", exc)
             return
@@ -155,7 +155,7 @@ class ObjectClassifyEntity(ImageProcessingEntity):
         predictions = self._dsobject.predictions.copy()
 
         if len(predictions) > 0:
-            raw_confidences = ds.get_label_confidences(predictions, self._target)
+            raw_confidences = ds.get_object_confidences(predictions, self._target)
             self._targets_confidences = [
                 ds.format_confidence(confidence) for confidence in raw_confidences
             ]
