@@ -43,7 +43,7 @@ image_processing:
     port: 5000
     api_key: Mysecretkey
     timeout: 5
-    scan_interval: 20000
+    scan_interval: 20
     save_file_folder: /config/www/deepstack_person_images
     target: person
     confidence: 50
@@ -163,5 +163,11 @@ A3. Based on my experience, I would allow 0.5 GB RAM per model.
 Q4: Can object detection be configured to detect car/car colour?
 
 A4: The list of detected object classes is at the end of the page [here](https://deepstackpython.readthedocs.io/en/latest/objectdetection.html). There is no support for detecting the colour of an object.
+
+------
+
+Q5: I am getting an error from Home Assistant: `Platform error: image_processing - Integration deepstack_object not found`
+
+A5: This can happen when you are running in Docker/Hassio, and indicates that one of the dependencies isn't installed. It is necessary to reboot your Hassio device, or rebuild your Docker container. Note that just restarting Home Assistant will not resolve this.
 
 ------
