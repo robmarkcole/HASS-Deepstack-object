@@ -18,22 +18,17 @@ On your machine with docker, run Deepstack without any recognition so you can ac
 sudo docker run -v localstorage:/datastore -p 5000:5000 deepquestai/deepstack
 ```
 
-Now go to http://YOUR_SERVER_IP_ADDRESS:5000/ on another computer or the same one running Deepstack. Input your activation key from your portal into the text box below "Enter New Activation Key" and press enter. Now stop your docker container. You are now ready to start using Deepstack! To check Deepstack is ready make a request using cURL:
-```
-curl -X POST -F image=@development/test-image3.jpg 'http://localhost:5000/v1/vision/detection'
-```
-This should return the predictions for that image.
+Now go to http://YOUR_SERVER_IP_ADDRESS:5000/ on another computer or the same one running Deepstack. Input your activation key from your portal into the text box below "Enter New Activation Key" and press enter. Now stop your docker container, and restart using the ecample command in these docs.
 
 ## Home Assistant setup
 Place the `custom_components` folder in your configuration directory (or add its contents to an existing `custom_components` folder). Then configure object detection. Note that at we use `scan_interval` to (optionally) limit computation, [as described here](https://www.home-assistant.io/components/image_processing/#scan_interval-and-optimising-resources).
 
-## Object Detection
-Deepstack [object detection](https://python.deepstack.cc/object-detection) can identify 80 different kinds of objects, including people (`person`) and animals. On you machine with docker, run Deepstack with the object detection service active on port `5000`:
+Deepstack [object detection](https://python.deepstack.cc/object-detection) can identify 80 different kinds of objects, including people (`person`) and animals. On you machine with docker, run Deepstack (noavx mode) with the object detection service active on port `5000`:
 ```
-sudo docker run -e VISION-DETECTION=True -e API-KEY="Mysecretkey" -v localstorage:/datastore -p 5000:5000 deepquestai/deepstack
+docker run -e VISION-DETECTION=True -e API-KEY="Mysecretkey" -v localstorage:/datastore -p 5000:5000 --name deepstack -d deepquestai/deepstack:noavx
 ```
 
-The `deepstack_object` component adds an `image_processing` entity where the state of the entity is the total number of `target` objects that are above a `confidence` threshold which has a default value of 80%. The class and number of objects of each object detected (any confidence) is listed in the entity attributes. An event `image_processing.object_detected` is fired for each object detected. Optionally the processed image can be saved to disk. If `save_file_folder` is configured two images are created, one with the filename of format `deepstack_latest_{target}.jpg` which is over-written on each new detection of the `target`, and another with a unique filename including the timestamp.
+The `deepstack_object` component adds an `image_processing` entity where the state of the entity is the total number of `target` objects that are above a `confidence` threshold which has a default value of 80%. The class and number of objects of each object detected (of any confidence) is listed in the entity attributes, as well as the time of the last positive detection of the target object in the `last detection` attribute. An event `image_processing.object_detected` is fired for each object detected. Optionally the processed image can be saved to disk. If `save_file_folder` is configured two images are created, one with the filename of format `deepstack_latest_{target}.jpg` which is over-written on each new detection of the `target`, and another with a unique filename including the timestamp. You can use a [local_file](https://www.home-assistant.io/integrations/local_file/) camera to display the `deepstack_latest_{target}.jpg` image on the HA front-end.
 
 Add to your Home-Assistant config:
 ```yaml
@@ -138,6 +133,14 @@ For code related issues such as suspected bugs, please open an issue on this rep
 
 ### Docker tips
 Add the `-d` flag to run the container in background, thanks [@arsaboo](https://github.com/arsaboo).
+
+### Deepstack health check
+
+To check Deepstack is functioning, run without an api_key and make a request using cURL from the command line:
+```
+curl -X POST -F image=@development/test-image3.jpg 'http://localhost:5000/v1/vision/detection'
+```
+This should return the predictions for that image.
 
 ### FAQ
 Q1: I get the following warning, is this normal?
