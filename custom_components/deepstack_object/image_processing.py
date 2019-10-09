@@ -62,6 +62,11 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
     }
 )
 
+def get_now_str():
+    """
+    Returns now as string.
+    """
+    return dt_util.now().strftime("%Y-%m-%d-%H-%M-%S")
 
 def draw_box(draw, prediction, text="", color=(255, 0, 0)):
     """Draw bounding box on image."""
@@ -139,6 +144,7 @@ class ObjectClassifyEntity(ImageProcessingEntity):
         self._state = None
         self._targets_confidences = []
         self._predictions = {}
+        self._last_detection = None
         if save_file_folder:
             self._save_file_folder = save_file_folder
 
@@ -165,6 +171,8 @@ class ObjectClassifyEntity(ImageProcessingEntity):
                     self._targets_confidences, self._confidence
                 )
             )
+            if self._state > 0:
+                self._last_detection = get_now_str()
             self._predictions = ds.get_objects_summary(predictions)
             self.fire_prediction_events(predictions, self._confidence)
             if hasattr(self, "_save_file_folder") and self._state > 0:
@@ -188,9 +196,8 @@ class ObjectClassifyEntity(ImageProcessingEntity):
             ):
                 draw_box(draw, prediction, str(prediction_confidence))
 
-        now = dt_util.now().strftime("%Y-%m-%d-%H-%M-%S")
         latest_save_path = directory + "deepstack_latest_{}.jpg".format(target)
-        timestamp_save_path = directory + "deepstack_{}_{}.jpg".format(target, now)
+        timestamp_save_path = directory + "deepstack_{}_{}.jpg".format(target, get_now_str())
         try:
             img.save(latest_save_path)
             img.save(timestamp_save_path)
@@ -243,6 +250,7 @@ class ObjectClassifyEntity(ImageProcessingEntity):
         attr["target"] = self._target
         attr["target_confidences"] = self._targets_confidences
         attr["all_predictions"] = self._predictions
+        attr["last_detection"] = self._last_detection
         if hasattr(self, "_save_file_folder"):
             attr["save_file_folder"] = self._save_file_folder
         return attr
