@@ -14,6 +14,7 @@ import voluptuous as vol
 
 import deepstack.core as ds
 
+import homeassistant.util.dt as dt_util
 from homeassistant.const import ATTR_ENTITY_ID, ATTR_NAME
 from homeassistant.core import split_entity_id
 import homeassistant.helpers.config_validation as cv
@@ -187,7 +188,7 @@ class ObjectClassifyEntity(ImageProcessingEntity):
             ):
                 draw_box(draw, prediction, str(prediction_confidence))
 
-        now = datetime.datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
+        now = dt_util.now().strftime("%Y-%m-%d-%H-%M-%S")
         latest_save_path = directory + "deepstack_latest_{}.jpg".format(target)
         timestamp_save_path = directory + "deepstack_{}_{}.jpg".format(target, now)
         try:
