@@ -68,13 +68,6 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
 )
 
 
-def get_now_str():
-    """
-    Returns now as string.
-    """
-    return dt_util.now().strftime("%Y-%m-%d-%H-%M-%S")
-
-
 def get_box(prediction: dict, img_width: int, img_height: int):
     """
     Return the relative bounxing box coordinates
@@ -92,40 +85,6 @@ def get_box(prediction: dict, img_width: int, img_height: int):
     rounding_decimals = 3
     box = [round(coord, rounding_decimals) for coord in box]
     return box
-
-
-def get_box_centroid(box: Tuple) -> Tuple:
-    """
-    Locate the box centroid in (x,y) coordinates where
-    (0,0) is the top left hand corner of the image and 
-    (1,1) is the bottom right corner of the image.
-    """
-    rounding_decimals = 3
-
-    y_min, x_min, y_max, x_max = box
-    centroid = ((x_max + x_min) / 2, (y_max + y_min) / 2)
-    centroid = [round(coord, rounding_decimals) for coord in centroid]
-    return centroid
-
-
-def format_predictions(predictions: dict, img_width: int, img_height: int) -> str:
-    """
-    Return deepstack predictions in standardised json format where confidences
-    are a percentage (%) and bounding boxes are in relative cordinates
-    """
-    predictions_formatted = []
-    for prediction in predictions:
-        formatted_prediction = {}
-        formatted_prediction["confidence"] = ds.format_confidence(
-            prediction["confidence"]
-        )
-        formatted_prediction["label"] = prediction["label"].lower()
-
-        box = get_box(prediction, img_width, img_height)
-        formatted_prediction["box"] = box
-        formatted_prediction["centroid"] = get_box_centroid(box)
-        predictions_formatted.append(formatted_prediction)
-    return json.dumps(predictions_formatted)
 
 
 def draw_box(
@@ -231,7 +190,9 @@ class ObjectClassifyEntity(ImageProcessingEntity):
 
     def process_image(self, image):
         """Process an image."""
-        self._image_width, self._image_height = Image.open(io.BytesIO(bytearray(image))).size
+        self._image_width, self._image_height = Image.open(
+            io.BytesIO(bytearray(image))
+        ).size
         self._state = None
         self._targets_confidences = []
         self._predictions = {}
@@ -255,7 +216,7 @@ class ObjectClassifyEntity(ImageProcessingEntity):
                 )
             )
             if self._state > 0:
-                self._last_detection = get_now_str()
+                self._last_detection = dt_util.now()
             self._summary = ds.get_objects_summary(self._predictions)
             self.fire_prediction_events(self._predictions, self._confidence)
             if hasattr(self, "_save_file_folder") and self._state > 0:
@@ -286,7 +247,7 @@ class ObjectClassifyEntity(ImageProcessingEntity):
 
         latest_save_path = directory + "deepstack_latest_{}.jpg".format(target)
         timestamp_save_path = directory + "deepstack_{}_{}.jpg".format(
-            target, get_now_str()
+            target, self._last_detection.strftime("%Y-%m-%d-%H-%M-%S")
         )
         try:
             img.save(latest_save_path)
@@ -334,16 +295,22 @@ class ObjectClassifyEntity(ImageProcessingEntity):
         return self._name
 
     @property
+    def unit_of_measurement(self):
+        """Return the unit of measurement."""
+        target = self._target
+        if self._state != None and self._state > 1:
+            target += "s"
+        return target
+
+    @property
     def device_state_attributes(self):
         """Return device specific state attributes."""
         attr = {}
         attr["target"] = self._target
         attr["target_confidences"] = self._targets_confidences
         attr["summary"] = self._summary
-        attr["predictions"] = format_predictions(
-            self._predictions, self._image_width, self._image_height
-        )
-        attr["last_detection"] = self._last_detection
+        if self._last_detection:
+            attr["last_detection"] = self._last_detection.strftime("%Y-%m-%d %H:%M:%S")
         if hasattr(self, "_save_file_folder"):
             attr["save_file_folder"] = self._save_file_folder
         return attr

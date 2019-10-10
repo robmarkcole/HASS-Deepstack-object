@@ -32,7 +32,7 @@ Deepstack [object detection](https://python.deepstack.cc/object-detection) can i
 docker run -e VISION-DETECTION=True -e API-KEY="Mysecretkey" -v localstorage:/datastore -p 5000:5000 --name deepstack -d deepquestai/deepstack:noavx
 ```
 
-The `deepstack_object` component adds an `image_processing` entity where the state of the entity is the total number of `target` objects that are above a `confidence` threshold which has a default value of 80%. The class and number of objects of each object detected (of any confidence) is listed in the entity attributes, as well as the time of the last positive detection of the target object in the `last detection` attribute. An event `image_processing.object_detected` is fired for each object detected. Optionally the processed image can be saved to disk. If `save_file_folder` is configured two images are created, one with the filename of format `deepstack_latest_{target}.jpg` which is over-written on each new detection of the `target`, and another with a unique filename including the timestamp. You can use a [local_file](https://www.home-assistant.io/integrations/local_file/) camera to display the `deepstack_latest_{target}.jpg` image on the HA front-end.
+The `deepstack_object` component adds an `image_processing` entity where the state of the entity is the total number of `target` objects that are above a `confidence` threshold which has a default value of 80%. The class and number of objects of each object detected (of any confidence) is listed in the entity attributes under `summary`, as well as the time of the last positive detection of the target object in the `last detection` attribute. An event `image_processing.object_detected` is fired for each object detected. Optionally the processed image can be saved to disk. If `save_file_folder` is configured two images are created, one with the filename of format `deepstack_latest_{target}.jpg` which is over-written on each new detection of the `target`, and another with a unique filename including the timestamp. You can use a [local_file](https://www.home-assistant.io/integrations/local_file/) camera to display the `deepstack_latest_{target}.jpg` image on the HA front-end.
 
 Add to your Home-Assistant config:
 ```yaml
@@ -68,26 +68,6 @@ Configuration variables:
 <p align="center">
 <img src="https://github.com/robmarkcole/HASS-Deepstack-object/blob/master/docs/object_detail.png" width="350">
 </p>
-
-## Predictions
-The full predictions from Deepstack are returned in the `predictions` attribute as json in a standardised format. This makes it easy to access any of the predictions data using a [template sensor](https://www.home-assistant.io/integrations/template/). Additionally the box coordinates and the box center (centroid) are returned, meaning an automation can be used to determine whether an object falls within a defined region-of-interest (ROI). This can be useful to include/exclude objects by their location in the image.
-
-**Note:** In the case that a unique object is present in an image (e.g. a single person or single car) then the direction of travel of the object [can in principle be determined](https://www.pyimagesearch.com/2018/07/23/simple-object-tracking-with-opencv/) by comparing centroids in adjacent image captures. This tracking functionality is not implemented yet in Home Assistant.
-
-Example prediction output:
-```
-[{'confidence': 85.0,
-  'label': 'person',
-  'box': [0.148, 0.307, 0.817, 0.47],
-  'centroid': [0.388, 0.482]},
-.
-.
-]
-```
-
-The `box` is defined by the tuple `(y_min, x_min, y_max, x_max)` (equivalent to image top, left, bottom, right) where the coordinates are floats in the range `[0.0, 1.0]` and relative to the width and height of the image.
-
-The centroid is in `(x,y)` coordinates where `(0,0)` is the top left hand corner of the image and `(1,1)` is the bottom right corner of the image.
 
 #### Event `image_processing.object_detected`
 An event `image_processing.object_detected` is fired for each object detected above the configured `confidence` threshold. An example use case for this is incrementing a [counter](https://www.home-assistant.io/components/counter/) when a person is detected. The `image_processing.object_detected` event payload includes:
