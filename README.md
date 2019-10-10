@@ -18,7 +18,7 @@ On your machine with docker, run Deepstack (noavx mode) without any recognition 
 sudo docker run -v localstorage:/datastore -p 5000:5000 deepquestai/deepstack:noavx
 ```
 
-Now go to http://YOUR_SERVER_IP_ADDRESS:5000/ on another computer or the same one running Deepstack. Input your activation key from your portal into the text box below "Enter New Activation Key" and press enter. Now stop your docker container, and restart using the ecample command in these docs.
+Now go to http://YOUR_SERVER_IP_ADDRESS:5000/ on another computer or the same one running Deepstack. Input your activation key from your portal into the text box below "Enter New Activation Key" and press enter. Now stop your docker container, and restart the container with the object detection endpoint activated (see below).
 
 ## Home Assistant setup
 Place the `custom_components` folder in your configuration directory (or add its contents to an existing `custom_components` folder). Then configure object detection. **Important:** It is necessary to configure only a single camera per `deepstack_object` entity. If you want to process multiple cameras, you will therefore need multiple `deepstack_object` `image_processing` entities. **Note** that at we can use `scan_interval` to (optionally) limit computation, [as described here](https://www.home-assistant.io/components/image_processing/#scan_interval-and-optimising-resources).
