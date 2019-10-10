@@ -2,20 +2,24 @@
 [Home Assistant](https://www.home-assistant.io/) custom components for using Deepstack object detection. [Deepstack](https://python.deepstack.cc/) is a service which runs in a docker container and exposes deep-learning models via a REST API. There is no cost for using Deepstack, although you will need a machine with 8 GB RAM. On your machine with docker, pull the latest image (approx. 2GB):
 
 ```
-sudo docker pull deepquestai/deepstack
+docker pull deepquestai/deepstack
+
+OR 
+
+docker pull deepquestai/deepstack:noavx
 ```
 **Recommended OS** Deepstack docker containers are optimised for Linux or Windows 10 Pro. Mac and regular windows users my experience performance issues.
 
 **GPU users** Note that if your machine has an Nvidia GPU you can get a 5 x 20 times performance boost by using the GPU.
 
-**Legacy machine users** If you are using a machine that doesn't support avx or you are having issues with making requests, Deepstack has a specific build for these systems. Use `deepquestai/deepstack:noavx` instead of `deepquestai/deepstack` when you are installing or running Deepstack.
+**Legacy machine users** If you are using a machine that doesn't support avx or you are having issues with making requests, Deepstack has a specific build for these systems. Use `deepquestai/deepstack:noavx` instead of `deepquestai/deepstack` when you are installing or running Deepstack. I expect many users will be using noavx mode so I will use it in the examples below.
 
 ## Activating the API
 Before you get started, you will need to activate the Deepstack API. First, go to www.deepstack.cc and sign up for an account. Choose the basic plan which will give us unlimited access for one installation. You will then see an activation key in your portal.
 
 On your machine with docker, run Deepstack (noavx mode) without any recognition so you can activate the API on port `5000`:
 ```
-sudo docker run -v localstorage:/datastore -p 5000:5000 deepquestai/deepstack:noavx
+docker run -v localstorage:/datastore -p 5000:5000 deepquestai/deepstack:noavx
 ```
 
 Now go to http://YOUR_SERVER_IP_ADDRESS:5000/ on another computer or the same one running Deepstack. Input your activation key from your portal into the text box below "Enter New Activation Key" and press enter. Now stop your docker container, and restart the container with the object detection endpoint activated (see below).
