@@ -6,8 +6,13 @@ https://home-assistant.io/components/image_processing.deepstack_object
 """
 import base64
 import datetime
+import io
+from typing import Tuple
+import json
 import logging
 import os
+
+from PIL import Image, ImageDraw
 
 import requests
 import voluptuous as vol
@@ -62,27 +67,100 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
     }
 )
 
+
 def get_now_str():
     """
     Returns now as string.
     """
     return dt_util.now().strftime("%Y-%m-%d-%H-%M-%S")
 
-def draw_box(draw, prediction, text="", color=(255, 0, 0)):
-    """Draw bounding box on image."""
+
+def get_box(prediction: dict, img_width: int, img_height: int):
+    """
+    Return the relative bounxing box coordinates
+    defined by the tuple (y_min, x_min, y_max, x_max)
+    where the coordinates are floats in the range [0.0, 1.0] and
+    relative to the width and height of the image.
+    """
+    box = [
+        prediction["y_min"] / img_height,
+        prediction["x_min"] / img_width,
+        prediction["y_max"] / img_height,
+        prediction["x_max"] / img_width,
+    ]
+
+    rounding_decimals = 3
+    box = [round(coord, rounding_decimals) for coord in box]
+    return box
+
+
+def get_box_centroid(box: Tuple) -> Tuple:
+    """
+    Locate the box centroid in (x,y) coordinates where
+    (0,0) is the top left hand corner of the image and 
+    (1,1) is the bottom right corner of the image.
+    """
+    rounding_decimals = 3
+
+    y_min, x_min, y_max, x_max = box
+    centroid = ((x_max + x_min) / 2, (y_max + y_min) / 2)
+    centroid = [round(coord, rounding_decimals) for coord in centroid]
+    return centroid
+
+
+def format_predictions(predictions: dict, img_width: int, img_height: int) -> str:
+    """
+    Return deepstack predictions in standardised json format where confidences
+    are a percentage (%) and bounding boxes are in relative cordinates
+    """
+    predictions_formatted = []
+    for prediction in predictions:
+        formatted_prediction = {}
+        formatted_prediction["confidence"] = ds.format_confidence(
+            prediction["confidence"]
+        )
+        formatted_prediction["label"] = prediction["label"].lower()
+
+        box = get_box(prediction, img_width, img_height)
+        formatted_prediction["box"] = box
+        formatted_prediction["centroid"] = get_box_centroid(box)
+        predictions_formatted.append(formatted_prediction)
+    return json.dumps(predictions_formatted)
+
+
+def draw_box(
+    draw: ImageDraw,
+    box: Tuple[float, float, float, float],
+    img_width: int,
+    img_height: int,
+    text: str = "",
+    color: Tuple[int, int, int] = (255, 255, 0),
+) -> None:
+    """
+    Draw a bounding box on and image.
+    The bounding box is defined by the tuple (y_min, x_min, y_max, x_max)
+    where the coordinates are floats in the range [0.0, 1.0] and
+    relative to the width and height of the image.
+    For example, if an image is 100 x 200 pixels (height x width) and the bounding
+    box is `(0.1, 0.2, 0.5, 0.9)`, the upper-left and bottom-right coordinates of
+    the bounding box will be `(40, 10)` to `(180, 50)` (in (x,y) coordinates).
+    """
+
+    line_width = 5
+    y_min, x_min, y_max, x_max = box
     (left, right, top, bottom) = (
-        prediction["x_min"],
-        prediction["x_max"],
-        prediction["y_min"],
-        prediction["y_max"],
+        x_min * img_width,
+        x_max * img_width,
+        y_min * img_height,
+        y_max * img_height,
     )
     draw.line(
         [(left, top), (left, bottom), (right, bottom), (right, top), (left, top)],
-        width=5,
+        width=line_width,
         fill=color,
     )
     if text:
-        draw.text((left, abs(top - 15)), text, fill=color)
+        draw.text((left + line_width, abs(top - line_width)), text, fill=color)
 
 
 def setup_platform(hass, config, add_devices, discovery_info=None):
@@ -144,25 +222,30 @@ class ObjectClassifyEntity(ImageProcessingEntity):
         self._state = None
         self._targets_confidences = []
         self._predictions = {}
+        self._summary = {}
         self._last_detection = None
+        self._image_width = None
+        self._image_height = None
         if save_file_folder:
             self._save_file_folder = save_file_folder
 
     def process_image(self, image):
         """Process an image."""
+        self._image_width, self._image_height = Image.open(io.BytesIO(bytearray(image))).size
         self._state = None
         self._targets_confidences = []
         self._predictions = {}
+        self._summary = {}
         try:
             self._dsobject.detect(image)
         except ds.DeepstackException as exc:
             _LOGGER.error("Depstack error : %s", exc)
             return
 
-        predictions = self._dsobject.predictions.copy()
+        self._predictions = self._dsobject.predictions.copy()
 
-        if len(predictions) > 0:
-            raw_confidences = ds.get_object_confidences(predictions, self._target)
+        if len(self._predictions) > 0:
+            raw_confidences = ds.get_object_confidences(self._predictions, self._target)
             self._targets_confidences = [
                 ds.format_confidence(confidence) for confidence in raw_confidences
             ]
@@ -173,31 +256,38 @@ class ObjectClassifyEntity(ImageProcessingEntity):
             )
             if self._state > 0:
                 self._last_detection = get_now_str()
-            self._predictions = ds.get_objects_summary(predictions)
-            self.fire_prediction_events(predictions, self._confidence)
+            self._summary = ds.get_objects_summary(self._predictions)
+            self.fire_prediction_events(self._predictions, self._confidence)
             if hasattr(self, "_save_file_folder") and self._state > 0:
                 self.save_image(
-                    image, predictions, self._target, self._save_file_folder
+                    image, self._predictions, self._target, self._save_file_folder
                 )
 
-    def save_image(self, image, predictions_json, target, directory):
+    def save_image(self, image, predictions, target, directory):
         """Save a timestamped image with bounding boxes around targets."""
-        from PIL import Image, ImageDraw
-        import io
 
         img = Image.open(io.BytesIO(bytearray(image))).convert("RGB")
         draw = ImageDraw.Draw(img)
 
-        for prediction in predictions_json:
+        for prediction in predictions:
             prediction_confidence = ds.format_confidence(prediction["confidence"])
             if (
                 prediction["label"] == target
                 and prediction_confidence >= self._confidence
             ):
-                draw_box(draw, prediction, str(prediction_confidence))
+                box = get_box(prediction, self._image_width, self._image_height)
+                draw_box(
+                    draw,
+                    box,
+                    self._image_width,
+                    self._image_height,
+                    str(prediction_confidence),
+                )
 
         latest_save_path = directory + "deepstack_latest_{}.jpg".format(target)
-        timestamp_save_path = directory + "deepstack_{}_{}.jpg".format(target, get_now_str())
+        timestamp_save_path = directory + "deepstack_{}_{}.jpg".format(
+            target, get_now_str()
+        )
         try:
             img.save(latest_save_path)
             img.save(timestamp_save_path)
@@ -206,10 +296,10 @@ class ObjectClassifyEntity(ImageProcessingEntity):
         except Exception as exc:
             _LOGGER.error("Error saving bounding box image : %s", exc)
 
-    def fire_prediction_events(self, predictions_json, confidence):
+    def fire_prediction_events(self, predictions, confidence):
         """Fire events based on predictions if above confidence threshold."""
 
-        for prediction in predictions_json:
+        for prediction in predictions:
             if ds.format_confidence(prediction["confidence"]) > confidence:
                 self.hass.bus.fire(
                     EVENT_OBJECT_DETECTED,
@@ -249,7 +339,10 @@ class ObjectClassifyEntity(ImageProcessingEntity):
         attr = {}
         attr["target"] = self._target
         attr["target_confidences"] = self._targets_confidences
-        attr["all_predictions"] = self._predictions
+        attr["summary"] = self._summary
+        attr["predictions"] = format_predictions(
+            self._predictions, self._image_width, self._image_height
+        )
         attr["last_detection"] = self._last_detection
         if hasattr(self, "_save_file_folder"):
             attr["save_file_folder"] = self._save_file_folder
