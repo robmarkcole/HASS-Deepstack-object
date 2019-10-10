@@ -8,7 +8,7 @@ OR
 
 docker pull deepquestai/deepstack:noavx
 ```
-**Recommended OS** Deepstack docker containers are optimised for Linux or Windows 10 Pro. Mac and regular windows users my experience performance issues.
+**Recommended OS** Deepstack docker containers are optimised for Linux or Windows 10 Pro. Mac and regular windows users my experience performance issues. [You can also run deepstack on a Raspberry pi](https://python.deepstack.cc/raspberry-pi) if you own an Intel NCS (Movidius) stick (approx $70).
 
 **GPU users** Note that if your machine has an Nvidia GPU you can get a 5 x 20 times performance boost by using the GPU.
 
