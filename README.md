@@ -65,6 +65,26 @@ Configuration variables:
 <img src="https://github.com/robmarkcole/HASS-Deepstack-object/blob/master/docs/object_detail.png" width="350">
 </p>
 
+## Predictions
+The full predictions from Deepstack are returned in the `predictions` attribute as json in a standardised format. This makes it easy to access any of the predictions data using a [template sensor](https://www.home-assistant.io/integrations/template/). Additionally the box coordinates and the box center (centroid) are returned, meaning an automation can be used to determine whether an object falls within a defined region-of-interest (ROI). This can be useful to include/exclude objects by their location in the image.
+
+**Note:** In the case that a unique object is present in an image (e.g. a single person or single car) then the direction of travel of the object [can in principle be determined](https://www.pyimagesearch.com/2018/07/23/simple-object-tracking-with-opencv/) by comparing centroids in adjacent image captures. This tracking functionality is not implemented yet in Home Assistant.
+
+Example prediction output:
+```
+[{'confidence': 85.0,
+  'label': 'person',
+  'box': [0.148, 0.307, 0.817, 0.47],
+  'centroid': [0.388, 0.482]},
+.
+.
+]
+```
+
+The `box` is defined by the tuple `(y_min, x_min, y_max, x_max)` (equivalent to image top, left, bottom, right) where the coordinates are floats in the range `[0.0, 1.0]` and relative to the width and height of the image.
+
+The centroid is in `(x,y)` coordinates where `(0,0)` is the top left hand corner of the image and `(1,1)` is the bottom right corner of the image.
+
 #### Event `image_processing.object_detected`
 An event `image_processing.object_detected` is fired for each object detected above the configured `confidence` threshold. An example use case for this is incrementing a [counter](https://www.home-assistant.io/components/counter/) when a person is detected. The `image_processing.object_detected` event payload includes:
 
