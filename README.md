@@ -70,9 +70,8 @@ Configuration variables:
 </p>
 
 #### Event `image_processing.object_detected`
-An event `image_processing.object_detected` is fired for each object detected above the configured `confidence` threshold. An example use case for this is incrementing a [counter](https://www.home-assistant.io/components/counter/) when a person is detected. The `image_processing.object_detected` event payload includes:
+An event `image_processing.object_detected` is fired for each object detected above the configured `confidence` threshold. This is the recommended way to check the confidence of detections, and to keep track of objects that are not configured as the `target` (configure logger level to `debug` to observe events in the Home Assistant logs). An example use case for event is to get an alert when some rarely appearing object is detected, or to increment a [counter](https://www.home-assistant.io/components/counter/). The `image_processing.object_detected` event payload includes:
 
-- `classifier` : the classifier (i.e. `deepstack_object`)
 - `entity_id` : the entity id responsible for the event
 - `object` : the object detected
 - `confidence` : the confidence in detection in the range 0 - 1 where 1 is 100% confidence.
@@ -98,7 +97,6 @@ An example automation using the `image_processing.object_detected` event is give
 #### Event `image_processing.file_saved`
 If `save_file_folder` is configured, an new image will be saved with bounding boxes of detected `target` objects, and the filename will include the time of the image capture. On saving this image a `image_processing.file_saved` event is fired, with a payload that includes:
 
-- `classifier` : the classifier (i.e. `deepstack_object`)
 - `entity_id` : the entity id responsible for the event
 - `file` : the full path to the saved file
 

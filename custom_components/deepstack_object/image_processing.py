@@ -42,7 +42,6 @@ from homeassistant.const import (
 
 _LOGGER = logging.getLogger(__name__)
 
-CLASSIFIER = "deepstack_object"
 CONF_API_KEY = "api_key"
 CONF_TARGET = "target"
 CONF_TIMEOUT = "timeout"
@@ -265,7 +264,6 @@ class ObjectClassifyEntity(ImageProcessingEntity):
                 self.hass.bus.fire(
                     EVENT_OBJECT_DETECTED,
                     {
-                        "classifier": CLASSIFIER,
                         ATTR_ENTITY_ID: self.entity_id,
                         OBJECT: prediction["label"],
                         ATTR_CONFIDENCE: ds.format_confidence(prediction["confidence"]),
@@ -275,8 +273,7 @@ class ObjectClassifyEntity(ImageProcessingEntity):
     def fire_saved_file_event(self, save_path):
         """Fire event when saving a file"""
         self.hass.bus.fire(
-            EVENT_FILE_SAVED,
-            {"classifier": CLASSIFIER, ATTR_ENTITY_ID: self.entity_id, FILE: save_path},
+            EVENT_FILE_SAVED, {ATTR_ENTITY_ID: self.entity_id, FILE: save_path}
         )
 
     @property
@@ -307,10 +304,7 @@ class ObjectClassifyEntity(ImageProcessingEntity):
         """Return device specific state attributes."""
         attr = {}
         attr["target"] = self._target
-        attr["target_confidences"] = self._targets_confidences
-        attr["summary"] = self._summary
         if self._last_detection:
             attr["last_detection"] = self._last_detection.strftime("%Y-%m-%d %H:%M:%S")
-        if hasattr(self, "_save_file_folder"):
-            attr["save_file_folder"] = self._save_file_folder
+        attr["summary"] = self._summary
         return attr
