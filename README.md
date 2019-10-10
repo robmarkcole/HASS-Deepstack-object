@@ -13,9 +13,9 @@ sudo docker pull deepquestai/deepstack
 ## Activating the API
 Before you get started, you will need to activate the Deepstack API. First, go to www.deepstack.cc and sign up for an account. Choose the basic plan which will give us unlimited access for one installation. You will then see an activation key in your portal.
 
-On your machine with docker, run Deepstack without any recognition so you can activate the API on port `5000`:
+On your machine with docker, run Deepstack (noavx mode) without any recognition so you can activate the API on port `5000`:
 ```
-sudo docker run -v localstorage:/datastore -p 5000:5000 deepquestai/deepstack
+sudo docker run -v localstorage:/datastore -p 5000:5000 deepquestai/deepstack:noavx
 ```
 
 Now go to http://YOUR_SERVER_IP_ADDRESS:5000/ on another computer or the same one running Deepstack. Input your activation key from your portal into the text box below "Enter New Activation Key" and press enter. Now stop your docker container, and restart using the ecample command in these docs.
