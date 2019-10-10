@@ -1,5 +1,5 @@
 # HASS-Deepstack-object
-[Home Assistant](https://www.home-assistant.io/) custom components for using Deepstack object detection. [Deepstack](https://python.deepstack.cc/) is a service which runs in a docker container and exposes deep-learning models via a REST API. There is no cost for using Deepstack, although you will need a machine with 8 GB RAM. On your machine with docker, pull the latest image (approx. 2GB):
+[Home Assistant](https://www.home-assistant.io/) custom components for using Deepstack object detection. [Deepstack](https://python.deepstack.cc/) is a service which runs in a docker container and exposes deep-learning models via a REST API. Deepstack [object detection](https://python.deepstack.cc/object-detection) can identify 80 different kinds of objects, including people (`person`) and animals. There is no cost for using Deepstack, although you will need a machine with 8 GB RAM. On your machine with docker, pull the latest image (approx. 2GB):
 
 ```
 docker pull deepquestai/deepstack
@@ -22,17 +22,15 @@ On your machine with docker, run Deepstack (noavx mode) without any recognition 
 docker run -v localstorage:/datastore -p 5000:5000 deepquestai/deepstack:noavx
 ```
 
-Now go to http://YOUR_SERVER_IP_ADDRESS:5000/ on another computer or the same one running Deepstack. Input your activation key from your portal into the text box below "Enter New Activation Key" and press enter. Now stop your docker container, and restart the container with the object detection endpoint activated (see below).
-
-## Home Assistant setup
-Place the `custom_components` folder in your configuration directory (or add its contents to an existing `custom_components` folder). Then configure object detection. **Important:** It is necessary to configure only a single camera per `deepstack_object` entity. If you want to process multiple cameras, you will therefore need multiple `deepstack_object` `image_processing` entities. **Note** that at we can use `scan_interval` to (optionally) limit computation, [as described here](https://www.home-assistant.io/components/image_processing/#scan_interval-and-optimising-resources).
-
-Deepstack [object detection](https://python.deepstack.cc/object-detection) can identify 80 different kinds of objects, including people (`person`) and animals. On you machine with docker, run Deepstack (noavx mode) with the object detection service active on port `5000`:
+Now go to http://YOUR_SERVER_IP_ADDRESS:5000/ on another computer or the same one running Deepstack. Input your activation key from your portal into the text box below "Enter New Activation Key" and press enter. Now stop your docker container, and restart and run Deepstack (noavx mode) with the object detection service active on port `5000`:
 ```
 docker run -e VISION-DETECTION=True -e API-KEY="Mysecretkey" -v localstorage:/datastore -p 5000:5000 --name deepstack -d deepquestai/deepstack:noavx
 ```
 
-The `deepstack_object` component adds an `image_processing` entity where the state of the entity is the total number of `target` objects that are above a `confidence` threshold which has a default value of 80%. The class and number of objects of each object detected (of any confidence) is listed in the entity attributes under `summary`, as well as the time of the last positive detection of the target object in the `last detection` attribute. An event `image_processing.object_detected` is fired for each object detected. Optionally the processed image can be saved to disk. If `save_file_folder` is configured two images are created, one with the filename of format `deepstack_latest_{target}.jpg` which is over-written on each new detection of the `target`, and another with a unique filename including the timestamp. You can use a [local_file](https://www.home-assistant.io/integrations/local_file/) camera to display the `deepstack_latest_{target}.jpg` image on the HA front-end.
+## Home Assistant setup
+Place the `custom_components` folder in your configuration directory (or add its contents to an existing `custom_components` folder). Then configure object detection. **Important:** It is necessary to configure only a single camera per `deepstack_object` entity. If you want to process multiple cameras, you will therefore need multiple `deepstack_object` `image_processing` entities. **Note** that at we can use `scan_interval` to (optionally) limit computation, [as described here](https://www.home-assistant.io/components/image_processing/#scan_interval-and-optimising-resources).
+
+The `deepstack_object` component adds an `image_processing` entity where the state of the entity is the total number of `target` objects that are above a `confidence` threshold which has a default value of 80%. The time of the last positive detection of the `target` object is in the `last detection` attribute. The class and number of objects all objects detected (of any confidence) is listed in the `summary` attributes. An event `image_processing.object_detected` is fired for each object detected. Optionally the processed image can be saved to disk. If `save_file_folder` is configured two images are created, one with the filename of format `deepstack_latest_{target}.jpg` which is over-written on each new detection of the `target`, and another with a unique filename including the timestamp. You can use a [local_file](https://www.home-assistant.io/integrations/local_file/) camera to display the `deepstack_latest_{target}.jpg` image on the HA front-end.
 
 Add to your Home-Assistant config:
 ```yaml
