@@ -118,11 +118,12 @@ An example automation using the `image_processing.file_saved` event is given bel
     event_type: image_processing.file_saved
 ```
 
-The second image created on new detections has a fixed filename to make it easy to display with the [local_file](https://www.home-assistant.io/components/local_file/) camera. An example configuration is:
+## Displaying the `deepstack_latest_{target}.jpg` file
+It easy to display the `deepstack_latest_{target}.jpg` image with a [local_file](https://www.home-assistant.io/components/local_file/) camera. An example configuration is:
 ```yaml
 camera:
   - platform: local_file
-    file_path: /Users/robincole/.homeassistant/images/deepstack/deepstack_latest_person.jpg
+    file_path: /config/www/deepstack/deepstack_latest_person.jpg
     name: deepstack_latest_person
 ```
 
