@@ -14,7 +14,7 @@ docker pull deepquestai/deepstack:noavx
 
 **Legacy machine users** If you are using a machine that doesn't support avx or you are having issues with making requests, Deepstack has a specific build for these systems. Use `deepquestai/deepstack:noavx` instead of `deepquestai/deepstack` when you are installing or running Deepstack. I expect many users will be using noavx mode so I will use it in the examples below.
 
-## Activating the API
+## Activating the Deepstack API
 Before you get started, you will need to activate the Deepstack API. First, go to www.deepstack.cc and sign up for an account. Choose the basic plan which will give us unlimited access for one installation. You will then see an activation key in your portal.
 
 On your machine with docker, run Deepstack (noavx mode) without any recognition so you can activate the API on port `5000`:
@@ -27,27 +27,26 @@ Now go to http://YOUR_SERVER_IP_ADDRESS:5000/ on another computer or the same on
 docker run -e VISION-DETECTION=True -e API-KEY="Mysecretkey" -v localstorage:/datastore -p 5000:5000 --name deepstack -d deepquestai/deepstack:noavx
 ```
 
+## Usage of this component
+The `deepstack_object` component adds an `image_processing` entity where the state of the entity is the total number of `target` objects that are above a `confidence` threshold which has a default value of 80%. The time of the last detection of the `target` object is in the `last detection` attribute. The type and number of objects (of any confidence) is listed in the `summary` attributes. Optionally the processed image can be saved to disk. If `save_file_folder` is configured two images are created, one with the filename of format `deepstack_latest_{target}.jpg` which is over-written on each new detection of the `target`, and another with a unique filename including the timestamp. An event `image_processing.object_detected` is fired for each object detected. If you are a power user with advanced needs such as zoning detections or you want to track multiple object types, you will need to use the `image_processing.object_detected` events.
+
 ## Home Assistant setup
 Place the `custom_components` folder in your configuration directory (or add its contents to an existing `custom_components` folder). Then configure object detection. **Important:** It is necessary to configure only a single camera per `deepstack_object` entity. If you want to process multiple cameras, you will therefore need multiple `deepstack_object` `image_processing` entities. **Note** that at we can use `scan_interval` to (optionally) limit computation, [as described here](https://www.home-assistant.io/components/image_processing/#scan_interval-and-optimising-resources).
 
-The `deepstack_object` component adds an `image_processing` entity where the state of the entity is the total number of `target` objects that are above a `confidence` threshold which has a default value of 80%. The time of the last positive detection of the `target` object is in the `last detection` attribute. The class and number of objects all objects detected (of any confidence) is listed in the `summary` attributes. An event `image_processing.object_detected` is fired for each object detected. Optionally the processed image can be saved to disk. If `save_file_folder` is configured two images are created, one with the filename of format `deepstack_latest_{target}.jpg` which is over-written on each new detection of the `target`, and another with a unique filename including the timestamp. You can use a [local_file](https://www.home-assistant.io/integrations/local_file/) camera to display the `deepstack_latest_{target}.jpg` image on the HA front-end.
-
 Add to your Home-Assistant config:
+
 ```yaml
 image_processing:
   - platform: deepstack_object
     ip_address: localhost
     port: 5000
     api_key: Mysecretkey
-    timeout: 5
-    scan_interval: 20
     save_file_folder: /config/www/deepstack_person_images
-    target: person
-    confidence: 50
     source:
       - entity_id: camera.local_file
         name: person_detector
 ```
+
 Configuration variables:
 - **ip_address**: the ip address of your deepstack instance.
 - **port**: the port of your deepstack instance.
@@ -66,31 +65,6 @@ Configuration variables:
 <p align="center">
 <img src="https://github.com/robmarkcole/HASS-Deepstack-object/blob/master/docs/object_detail.png" width="350">
 </p>
-
-#### Event `image_processing.object_detected`
-An event `image_processing.object_detected` is fired for each object detected above the configured `confidence` threshold. This is the recommended way to check the confidence of detections, and to keep track of objects that are not configured as the `target` (configure logger level to `debug` to observe events in the Home Assistant logs). An example use case for event is to get an alert when some rarely appearing object is detected, or to increment a [counter](https://www.home-assistant.io/components/counter/). The `image_processing.object_detected` event payload includes:
-
-- `entity_id` : the entity id responsible for the event
-- `object` : the object detected
-- `confidence` : the confidence in detection in the range 0 - 1 where 1 is 100% confidence.
-
-An example automation using the `image_processing.object_detected` event is given below:
-
-```yaml
-- action:
-  - data_template:
-      title: "New object detection"
-      message: "{{ trigger.event.data.object }} with confidence {{ trigger.event.data.confidence }}"
-    service: notify.pushbullet
-  alias: Object detection automation
-  condition: []
-  id: '1120092824622'
-  trigger:
-  - platform: event
-    event_type: image_processing.object_detected
-    event_data:
-      object: person
-```
 
 #### Event `image_processing.file_saved`
 If `save_file_folder` is configured, an new image will be saved with bounding boxes of detected `target` objects, and the filename will include the time of the image capture. On saving this image a `image_processing.file_saved` event is fired, with a payload that includes:
@@ -113,6 +87,39 @@ An example automation using the `image_processing.file_saved` event is given bel
   - platform: event
     event_type: image_processing.file_saved
 ```
+
+#### Event `image_processing.object_detected`
+An event `image_processing.object_detected` is fired for each object detected above the configured `confidence` threshold. This is the recommended way to check the confidence of detections, and to keep track of objects that are not configured as the `target` (configure logger level to `debug` to observe events in the Home Assistant logs). An example use case for event is to get an alert when some rarely appearing object is detected, or to increment a [counter](https://www.home-assistant.io/components/counter/). The `image_processing.object_detected` event payload includes:
+
+- `entity_id` : the entity id responsible for the event
+- `object` : the object detected
+- `confidence` : the confidence in detection in the range 0 - 1 where 1 is 100% confidence.
+- `box` : the bounding box of the object
+- `centroid` : the centre point of the object
+
+An example automation using the `image_processing.object_detected` event is given below:
+
+```yaml
+- action:
+  - data_template:
+      title: "New object detection"
+      message: "{{ trigger.event.data.object }} with confidence {{ trigger.event.data.confidence }}"
+    service: notify.pushbullet
+  alias: Object detection automation
+  condition: []
+  id: '1120092824622'
+  trigger:
+  - platform: event
+    event_type: image_processing.object_detected
+    event_data:
+      object: person
+```
+
+The `box` coordinates and the box center (`centroid`) can be used to determine whether an object falls within a defined region-of-interest (ROI). This can be useful to include/exclude objects by their location in the image.
+
+* The `box` is defined by the tuple `(y_min, x_min, y_max, x_max)` (equivalent to image top, left, bottom, right) where the coordinates are floats in the range `[0.0, 1.0]` and relative to the width and height of the image.
+* The centroid is in `(x,y)` coordinates where `(0,0)` is the top left hand corner of the image and `(1,1)` is the bottom right corner of the image.
+
 
 ## Displaying the `deepstack_latest_{target}.jpg` file
 It easy to display the `deepstack_latest_{target}.jpg` image with a [local_file](https://www.home-assistant.io/components/local_file/) camera. An example configuration is:
