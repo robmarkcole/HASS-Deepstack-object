@@ -51,6 +51,8 @@ DEFAULT_TARGET = "person"
 DEFAULT_TIMEOUT = 10
 EVENT_OBJECT_DETECTED = "image_processing.object_detected"
 EVENT_FILE_SAVED = "image_processing.file_saved"
+BOX = "box"
+CENTROID = "centroid"
 FILE = "file"
 OBJECT = "object"
 
@@ -84,6 +86,20 @@ def get_box(prediction: dict, img_width: int, img_height: int):
     rounding_decimals = 3
     box = [round(coord, rounding_decimals) for coord in box]
     return box
+
+
+def get_box_centroid(box: Tuple) -> Tuple:
+    """
+    Locate the box centroid in (x,y) coordinates where
+    (0,0) is the top left hand corner of the image and 
+    (1,1) is the bottom right corner of the image.
+    """
+    rounding_decimals = 3
+
+    y_min, x_min, y_max, x_max = box
+    centroid = ((x_max + x_min) / 2, (y_max + y_min) / 2)
+    centroid = [round(coord, rounding_decimals) for coord in centroid]
+    return centroid
 
 
 def draw_box(
@@ -261,12 +277,15 @@ class ObjectClassifyEntity(ImageProcessingEntity):
 
         for prediction in predictions:
             if ds.format_confidence(prediction["confidence"]) > confidence:
+                box = get_box(prediction, self._image_width, self._image_height)
                 self.hass.bus.fire(
                     EVENT_OBJECT_DETECTED,
                     {
                         ATTR_ENTITY_ID: self.entity_id,
                         OBJECT: prediction["label"],
                         ATTR_CONFIDENCE: ds.format_confidence(prediction["confidence"]),
+                        BOX: box,
+                        CENTROID: get_box_centroid(box),
                     },
                 )
 
@@ -303,8 +322,9 @@ class ObjectClassifyEntity(ImageProcessingEntity):
     def device_state_attributes(self):
         """Return device specific state attributes."""
         attr = {}
-        attr["target"] = self._target
         if self._last_detection:
-            attr["last_detection"] = self._last_detection.strftime("%Y-%m-%d %H:%M:%S")
+            attr[
+                "last_{}_detection".format(self._target)
+            ] = self._last_detection.strftime("%Y-%m-%d %H:%M:%S")
         attr["summary"] = self._summary
         return attr
