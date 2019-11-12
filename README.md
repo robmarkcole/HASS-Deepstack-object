@@ -28,7 +28,9 @@ docker run -e VISION-DETECTION=True -e API-KEY="Mysecretkey" -v localstorage:/da
 ```
 
 ## Usage of this component
-The `deepstack_object` component adds an `image_processing` entity where the state of the entity is the total number of `target` objects that are above a `confidence` threshold which has a default value of 80%. The time of the last detection of the `target` object is in the `last detection` attribute. The type and number of objects (of any confidence) is listed in the `summary` attributes. Optionally the processed image can be saved to disk. If `save_file_folder` is configured two images are created, one with the filename of format `deepstack_latest_{target}.jpg` which is over-written on each new detection of the `target`, and another with a unique filename including the timestamp. An event `image_processing.object_detected` is fired for each object detected. If you are a power user with advanced needs such as zoning detections or you want to track multiple object types, you will need to use the `image_processing.object_detected` events.
+The `deepstack_object` component adds an `image_processing` entity where the state of the entity is the total number of `target` objects that are above a `confidence` threshold which has a default value of 80%. The time of the last detection of the `target` object is in the `last detection` attribute. The type and number of objects (of any confidence) is listed in the `summary` attributes. Optionally the processed image can be saved to disk. If `save_file_folder` is configured two images are created, one with the filename of format `deepstack_object_{source name}_latest_{target}.jpg` which is over-written on each new detection of the `target`, and another with a unique filename including the timestamp. An event `image_processing.object_detected` is fired for each object detected. If you are a power user with advanced needs such as zoning detections or you want to track multiple object types, you will need to use the `image_processing.object_detected` events.
+
+**Note** that by default the component will **not** automatically scan images, but requires you to call the `image_processing.scan` service e.g. using an automation triggered by motion. Alternativley, periodic scanning can be enabled by configuring a `scan_interval`.
 
 ## Home Assistant setup
 Place the `custom_components` folder in your configuration directory (or add its contents to an existing `custom_components` folder). Then configure object detection. **Important:** It is necessary to configure only a single camera per `deepstack_object` entity. If you want to process multiple cameras, you will therefore need multiple `deepstack_object` `image_processing` entities. **Note** that at we can use `scan_interval` to (optionally) limit computation, [as described here](https://www.home-assistant.io/components/image_processing/#scan_interval-and-optimising-resources).
@@ -41,10 +43,11 @@ image_processing:
     ip_address: localhost
     port: 5000
     api_key: Mysecretkey
-    save_file_folder: /config/www/deepstack_person_images
+    # scan_interval: 30 # Optional, in seconds
+    save_file_folder: /config/www/
     source:
       - entity_id: camera.local_file
-        name: person_detector
+        name: deepstack_person_detector
 ```
 
 Configuration variables:
@@ -121,12 +124,12 @@ The `box` coordinates and the box center (`centroid`) can be used to determine w
 * The centroid is in `(x,y)` coordinates where `(0,0)` is the top left hand corner of the image and `(1,1)` is the bottom right corner of the image.
 
 
-## Displaying the `deepstack_latest_{target}.jpg` file
-It easy to display the `deepstack_latest_{target}.jpg` image with a [local_file](https://www.home-assistant.io/components/local_file/) camera. An example configuration is:
+## Displaying the deepstack latest jpg file
+It easy to display the `deepstack_object_{source name}_latest_{target}.jpg` image with a [local_file](https://www.home-assistant.io/components/local_file/) camera. An example configuration is:
 ```yaml
 camera:
   - platform: local_file
-    file_path: /config/www/deepstack/deepstack_latest_person.jpg
+    file_path: /config/www/deepstack_object_local_file_latest_person.jpg
     name: deepstack_latest_person
 ```
 

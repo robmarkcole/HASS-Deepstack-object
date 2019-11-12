@@ -7,38 +7,39 @@ https://home-assistant.io/components/image_processing.deepstack_object
 import base64
 import datetime
 import io
-from typing import Tuple
 import json
 import logging
 import os
-
-from PIL import Image, ImageDraw
+from datetime import timedelta
+from typing import Tuple
 
 import requests
-import voluptuous as vol
+from PIL import Image, ImageDraw
 
 import deepstack.core as ds
-
-import homeassistant.util.dt as dt_util
-from homeassistant.const import ATTR_ENTITY_ID, ATTR_NAME
-from homeassistant.core import split_entity_id
 import homeassistant.helpers.config_validation as cv
+import homeassistant.util.dt as dt_util
+import voluptuous as vol
 from homeassistant.components.image_processing import (
-    PLATFORM_SCHEMA,
-    ImageProcessingEntity,
     ATTR_CONFIDENCE,
-    CONF_SOURCE,
     CONF_ENTITY_ID,
     CONF_NAME,
+    CONF_SOURCE,
     DOMAIN,
+    PLATFORM_SCHEMA,
+    ImageProcessingEntity,
+    draw_box,
 )
 from homeassistant.const import (
+    ATTR_ENTITY_ID,
+    ATTR_NAME,
     CONF_IP_ADDRESS,
     CONF_PORT,
     HTTP_BAD_REQUEST,
     HTTP_OK,
     HTTP_UNAUTHORIZED,
 )
+from homeassistant.core import split_entity_id
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -46,6 +47,7 @@ CONF_API_KEY = "api_key"
 CONF_TARGET = "target"
 CONF_TIMEOUT = "timeout"
 CONF_SAVE_FILE_FOLDER = "save_file_folder"
+DATETIME_FORMAT = "%Y-%m-%d %H:%M:%S"
 DEFAULT_API_KEY = ""
 DEFAULT_TARGET = "person"
 DEFAULT_TIMEOUT = 10
@@ -55,6 +57,8 @@ BOX = "box"
 CENTROID = "centroid"
 FILE = "file"
 OBJECT = "object"
+RED = (255, 0, 0)
+SCAN_INTERVAL = timedelta(days=365)  # NEVER SCAN.
 
 
 PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
@@ -100,41 +104,6 @@ def get_box_centroid(box: Tuple) -> Tuple:
     centroid = ((x_max + x_min) / 2, (y_max + y_min) / 2)
     centroid = [round(coord, rounding_decimals) for coord in centroid]
     return centroid
-
-
-def draw_box(
-    draw: ImageDraw,
-    box: Tuple[float, float, float, float],
-    img_width: int,
-    img_height: int,
-    text: str = "",
-    color: Tuple[int, int, int] = (255, 255, 0),
-) -> None:
-    """
-    Draw a bounding box on and image.
-    The bounding box is defined by the tuple (y_min, x_min, y_max, x_max)
-    where the coordinates are floats in the range [0.0, 1.0] and
-    relative to the width and height of the image.
-    For example, if an image is 100 x 200 pixels (height x width) and the bounding
-    box is `(0.1, 0.2, 0.5, 0.9)`, the upper-left and bottom-right coordinates of
-    the bounding box will be `(40, 10)` to `(180, 50)` (in (x,y) coordinates).
-    """
-
-    line_width = 5
-    y_min, x_min, y_max, x_max = box
-    (left, right, top, bottom) = (
-        x_min * img_width,
-        x_max * img_width,
-        y_min * img_height,
-        y_max * img_height,
-    )
-    draw.line(
-        [(left, top), (left, bottom), (right, bottom), (right, top), (left, top)],
-        width=line_width,
-        fill=color,
-    )
-    if text:
-        draw.text((left + line_width, abs(top - line_width)), text, fill=color)
 
 
 def setup_platform(hass, config, add_devices, discovery_info=None):
@@ -192,7 +161,7 @@ class ObjectClassifyEntity(ImageProcessingEntity):
             self._name = name
         else:
             camera_name = split_entity_id(camera_entity)[1]
-            self._name = "{} {}".format(CLASSIFIER, camera_name)
+            self._name = "deepstack_object_{}".format(camera_name)
         self._state = None
         self._targets_confidences = []
         self._predictions = {}
@@ -231,7 +200,7 @@ class ObjectClassifyEntity(ImageProcessingEntity):
                 )
             )
             if self._state > 0:
-                self._last_detection = dt_util.now()
+                self._last_detection = dt_util.now().strftime(DATETIME_FORMAT)
             self._summary = ds.get_objects_summary(self._predictions)
             self.fire_prediction_events(self._predictions, self._confidence)
             if hasattr(self, "_save_file_folder") and self._state > 0:
@@ -257,20 +226,19 @@ class ObjectClassifyEntity(ImageProcessingEntity):
                     box,
                     self._image_width,
                     self._image_height,
-                    str(prediction_confidence),
+                    text=str(prediction_confidence),
+                    color=RED,
                 )
 
-        latest_save_path = directory + "deepstack_latest_{}.jpg".format(target)
-        timestamp_save_path = directory + "deepstack_{}_{}.jpg".format(
-            target, self._last_detection.strftime("%Y-%m-%d-%H-%M-%S")
+        latest_save_path = directory + "{}_latest_{}.jpg".format(self._name, target)
+        timestamp_save_path = directory + "{}_{}_{}.jpg".format(
+            self._name, target, self._last_detection
         )
-        try:
-            img.save(latest_save_path)
-            img.save(timestamp_save_path)
-            self.fire_saved_file_event(timestamp_save_path)
-            _LOGGER.info("Saved bounding box image to %s", timestamp_save_path)
-        except Exception as exc:
-            _LOGGER.error("Error saving bounding box image : %s", exc)
+
+        img.save(latest_save_path)
+        img.save(timestamp_save_path)
+        self.fire_saved_file_event(timestamp_save_path)
+        _LOGGER.info("Saved bounding box image to %s", timestamp_save_path)
 
     def fire_prediction_events(self, predictions, confidence):
         """Fire events based on predictions if above confidence threshold."""
@@ -323,8 +291,6 @@ class ObjectClassifyEntity(ImageProcessingEntity):
         """Return device specific state attributes."""
         attr = {}
         if self._last_detection:
-            attr[
-                "last_{}_detection".format(self._target)
-            ] = self._last_detection.strftime("%Y-%m-%d %H:%M:%S")
+            attr["last_{}_detection".format(self._target)] = self._last_detection
         attr["summary"] = self._summary
         return attr
