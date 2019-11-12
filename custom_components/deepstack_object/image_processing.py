@@ -55,7 +55,6 @@ DEFAULT_TIMEOUT = 10
 EVENT_OBJECT_DETECTED = "image_processing.object_detected"
 EVENT_FILE_SAVED = "image_processing.file_saved"
 BOX = "box"
-CENTROID = "centroid"
 FILE = "file"
 OBJECT = "object"
 RED = (255, 0, 0)
@@ -92,20 +91,6 @@ def get_box(prediction: dict, img_width: int, img_height: int):
     rounding_decimals = 3
     box = [round(coord, rounding_decimals) for coord in box]
     return box
-
-
-def get_box_centroid(box: Tuple) -> Tuple:
-    """
-    Locate the box centroid in (x,y) coordinates where
-    (0,0) is the top left hand corner of the image and 
-    (1,1) is the bottom right corner of the image.
-    """
-    rounding_decimals = 3
-
-    y_min, x_min, y_max, x_max = box
-    centroid = ((x_max + x_min) / 2, (y_max + y_min) / 2)
-    centroid = [round(coord, rounding_decimals) for coord in centroid]
-    return centroid
 
 
 def setup_platform(hass, config, add_devices, discovery_info=None):
@@ -252,7 +237,6 @@ class ObjectClassifyEntity(ImageProcessingEntity):
                         OBJECT: prediction["label"],
                         ATTR_CONFIDENCE: ds.format_confidence(prediction["confidence"]),
                         BOX: box,
-                        CENTROID: get_box_centroid(box),
                     },
                 )
 
