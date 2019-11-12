@@ -28,7 +28,7 @@ docker run -e VISION-DETECTION=True -e API-KEY="Mysecretkey" -v localstorage:/da
 ```
 
 ## Usage of this component
-The `deepstack_object` component adds an `image_processing` entity where the state of the entity is the total number of `target` objects that are above a `confidence` threshold which has a default value of 80%. The time of the last detection of the `target` object is in the `last detection` attribute. The type and number of objects (of any confidence) is listed in the `summary` attributes. Optionally the processed image can be saved to disk. If `save_file_folder` is configured two images are created, one with the filename of format `deepstack_object_{source name}_latest_{target}.jpg` which is over-written on each new detection of the `target`, and another with a unique filename including the timestamp. An event `image_processing.object_detected` is fired for each object detected. If you are a power user with advanced needs such as zoning detections or you want to track multiple object types, you will need to use the `image_processing.object_detected` events.
+The `deepstack_object` component adds an `image_processing` entity where the state of the entity is the total number of `target` objects that are above a `confidence` threshold which has a default value of 80%. The time of the last detection of the `target` object is in the `last detection` attribute. The type and number of objects (of any confidence) is listed in the `summary` attributes. Optionally the processed image can be saved to disk. If `save_file_folder` is configured an image with filename of format `deepstack_object_{source name}_latest_{target}.jpg` is over-written on each new detection of the `target`. Optionally this image can also be saved with a timestamp in the filename, if `save_timestamped_file` is configred as `True`. An event `image_processing.object_detected` is fired for each object detected. If you are a power user with advanced needs such as zoning detections or you want to track multiple object types, you will need to use the `image_processing.object_detected` events.
 
 **Note** that by default the component will **not** automatically scan images, but requires you to call the `image_processing.scan` service e.g. using an automation triggered by motion. Alternativley, periodic scanning can be enabled by configuring a `scan_interval`. The use of `scan_interval` [is described here](https://www.home-assistant.io/components/image_processing/#scan_interval-and-optimising-resources).
 
@@ -56,6 +56,7 @@ Configuration variables:
 - **api_key**: (Optional) Any API key you have set.
 - **timeout**: (Optional, default 10 seconds) The timout for requests to deepstack.
 - **save_file_folder**: (Optional) The folder to save processed images to. Note that folder path should be added to [whitelist_external_dirs](https://www.home-assistant.io/docs/configuration/basic/)
+- **save_timestamped_file**: (Optional, default `False`, requires `save_file_folder` to be configured) Save the processed image with the time of detection in the filename.
 - **source**: Must be a camera.
 - **target**: The target object class, default `person`.
 - **confidence**: (Optional) The confidence (in %) above which detected targets are counted in the sensor state. Default value: 80
