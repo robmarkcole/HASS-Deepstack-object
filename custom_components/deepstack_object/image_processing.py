@@ -47,6 +47,7 @@ CONF_API_KEY = "api_key"
 CONF_TARGET = "target"
 CONF_TIMEOUT = "timeout"
 CONF_SAVE_FILE_FOLDER = "save_file_folder"
+CONF_SAVE_TIMESTAMPTED_FILE = "save_timestamped_file"
 DATETIME_FORMAT = "%Y-%m-%d %H:%M:%S"
 DEFAULT_API_KEY = ""
 DEFAULT_TARGET = "person"
@@ -69,6 +70,7 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
         vol.Optional(CONF_TIMEOUT, default=DEFAULT_TIMEOUT): cv.positive_int,
         vol.Optional(CONF_TARGET, default=DEFAULT_TARGET): cv.string,
         vol.Optional(CONF_SAVE_FILE_FOLDER): cv.isdir,
+        vol.Optional(CONF_SAVE_TIMESTAMPTED_FILE, default=False): cv.boolean,
     }
 )
 
@@ -108,28 +110,22 @@ def get_box_centroid(box: Tuple) -> Tuple:
 
 def setup_platform(hass, config, add_devices, discovery_info=None):
     """Set up the classifier."""
-    ip_address = config.get(CONF_IP_ADDRESS)
-    port = config.get(CONF_PORT)
-    api_key = config.get(CONF_API_KEY)
-    timeout = config.get(CONF_TIMEOUT)
-    target = config.get(CONF_TARGET)
     save_file_folder = config.get(CONF_SAVE_FILE_FOLDER)
-    confidence = config.get(ATTR_CONFIDENCE)
-
     if save_file_folder:
         save_file_folder = os.path.join(save_file_folder, "")  # If no trailing / add it
 
     entities = []
     for camera in config[CONF_SOURCE]:
         object_entity = ObjectClassifyEntity(
-            ip_address,
-            port,
-            api_key,
-            timeout,
-            target,
-            confidence,
+            config.get(CONF_IP_ADDRESS),
+            config.get(CONF_PORT),
+            config.get(CONF_API_KEY),
+            config.get(CONF_TIMEOUT),
+            config.get(CONF_TARGET),
+            config.get(ATTR_CONFIDENCE),
             save_file_folder,
-            camera[CONF_ENTITY_ID],
+            config.get(CONF_SAVE_TIMESTAMPTED_FILE),
+            camera.get(CONF_ENTITY_ID),
             camera.get(CONF_NAME),
         )
         entities.append(object_entity)
@@ -148,6 +144,7 @@ class ObjectClassifyEntity(ImageProcessingEntity):
         target,
         confidence,
         save_file_folder,
+        save_timestamped_file,
         camera_entity,
         name=None,
     ):
@@ -171,6 +168,7 @@ class ObjectClassifyEntity(ImageProcessingEntity):
         self._image_height = None
         if save_file_folder:
             self._save_file_folder = save_file_folder
+        self._save_timestamped_file = save_timestamped_file
 
     def process_image(self, image):
         """Process an image."""
@@ -231,14 +229,15 @@ class ObjectClassifyEntity(ImageProcessingEntity):
                 )
 
         latest_save_path = directory + "{}_latest_{}.jpg".format(self._name, target)
-        timestamp_save_path = directory + "{}_{}_{}.jpg".format(
-            self._name, target, self._last_detection
-        )
-
         img.save(latest_save_path)
-        img.save(timestamp_save_path)
-        self.fire_saved_file_event(timestamp_save_path)
-        _LOGGER.info("Saved bounding box image to %s", timestamp_save_path)
+
+        if self._save_timestamped_file:
+            timestamp_save_path = directory + "{}_{}_{}.jpg".format(
+                self._name, target, self._last_detection
+            )
+            img.save(timestamp_save_path)
+            self.fire_saved_file_event(timestamp_save_path)
+            _LOGGER.info("Saved bounding box image to %s", timestamp_save_path)
 
     def fire_prediction_events(self, predictions, confidence):
         """Fire events based on predictions if above confidence threshold."""
