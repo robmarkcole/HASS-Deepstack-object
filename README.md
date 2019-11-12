@@ -45,6 +45,7 @@ image_processing:
     api_key: Mysecretkey
     # scan_interval: 30 # Optional, in seconds
     save_file_folder: /config/www/
+    save_timestamped_file: True
     source:
       - entity_id: camera.local_file
         name: deepstack_person_detector
