@@ -48,7 +48,7 @@ CONF_TARGET = "target"
 CONF_TIMEOUT = "timeout"
 CONF_SAVE_FILE_FOLDER = "save_file_folder"
 CONF_SAVE_TIMESTAMPTED_FILE = "save_timestamped_file"
-DATETIME_FORMAT = "%Y-%m-%d %H:%M:%S"
+DATETIME_FORMAT = "%Y-%m-%d_%H:%M:%S"
 DEFAULT_API_KEY = ""
 DEFAULT_TARGET = "person"
 DEFAULT_TIMEOUT = 10
@@ -220,7 +220,12 @@ class ObjectClassifyEntity(ImageProcessingEntity):
             timestamp_save_path = directory + "{}_{}_{}.jpg".format(
                 self._name, target, self._last_detection
             )
-            img.save(timestamp_save_path)
+
+            out_file = open(timestamp_save_path, "wb")
+            img.save(out_file, format="JPEG")
+            out_file.flush()
+            os.fsync(out_file)
+            out_file.close()
             self.fire_saved_file_event(timestamp_save_path)
             _LOGGER.info("Saved bounding box image to %s", timestamp_save_path)
 
