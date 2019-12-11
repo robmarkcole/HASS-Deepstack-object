@@ -1,3 +1,5 @@
+[![Sponsor](https://img.shields.io/badge/sponsor-%F0%9F%92%96-green)](https://github.com/sponsors/robmarkcole)
+
 # HASS-Deepstack-object
 [Home Assistant](https://www.home-assistant.io/) custom components for using Deepstack object detection. [Deepstack](https://python.deepstack.cc/) is a service which runs in a docker container and exposes deep-learning models via a REST API. Deepstack [object detection](https://python.deepstack.cc/object-detection) can identify 80 different kinds of objects, including people (`person`) and animals. There is no cost for using Deepstack, although you will need a machine with 8 GB RAM. On your machine with docker, pull the latest image (approx. 2GB):
 
@@ -187,3 +189,9 @@ Q5: I am getting an error from Home Assistant: `Platform error: image_processing
 A5: This can happen when you are running in Docker/Hassio, and indicates that one of the dependencies isn't installed. It is necessary to reboot your Hassio device, or rebuild your Docker container. Note that just restarting Home Assistant will not resolve this.
 
 ------
+
+## ✨ Support this work
+
+https://github.com/sponsors/robmarkcole
+
+If you or your business find this work useful please consider becoming a sponsor at the link above, this really helps justify the time I invest in maintaining this repo. As we say in England, 'every little helps' - thanks in advance!
