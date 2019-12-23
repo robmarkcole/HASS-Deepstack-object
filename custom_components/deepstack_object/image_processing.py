@@ -20,6 +20,7 @@ import deepstack.core as ds
 import homeassistant.helpers.config_validation as cv
 import homeassistant.util.dt as dt_util
 import voluptuous as vol
+from homeassistant.util.pil import draw_box
 from homeassistant.components.image_processing import (
     ATTR_CONFIDENCE,
     CONF_ENTITY_ID,
@@ -28,7 +29,6 @@ from homeassistant.components.image_processing import (
     DOMAIN,
     PLATFORM_SCHEMA,
     ImageProcessingEntity,
-    draw_box,
 )
 from homeassistant.const import (
     ATTR_ENTITY_ID,
