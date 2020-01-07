@@ -37,7 +37,7 @@ The `deepstack_object` component adds an `image_processing` entity where the sta
 ## Home Assistant setup
 Place the `custom_components` folder in your configuration directory (or add its contents to an existing `custom_components` folder). Then configure object detection. **Important:** It is necessary to configure only a single camera per `deepstack_object` entity. If you want to process multiple cameras, you will therefore need multiple `deepstack_object` `image_processing` entities.
 
-The component can optionally save snapshots of the processed images. If you would like to use this option, you need to create a sub-folder in your config folder, the same folder where your `configuration.yaml` file is located. In the example below, we have named the folder `snapshots`.
+The component can optionally save snapshots of the processed images. If you would like to use this option, you need to create a folder where the snapshots will be stored. The folder should be in the same folder where your `configuration.yaml` file is located. In the example below, we have named the folder `snapshots`.
 
 Add to your Home-Assistant config:
 
