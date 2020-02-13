@@ -50,6 +50,9 @@ image_processing:
     # scan_interval: 30 # Optional, in seconds
     save_file_folder: /config/snapshots/
     save_timestamped_file: True
+    target:
+      - person
+      - car
     source:
       - entity_id: camera.local_file
         name: deepstack_person_detector
