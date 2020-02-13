@@ -30,7 +30,7 @@ docker run -e VISION-DETECTION=True -e API-KEY="Mysecretkey" -v localstorage:/da
 ```
 
 ## Usage of this component
-The `deepstack_object` component adds an `image_processing` entity where the state of the entity is the total number of `target` objects that are above a `confidence` threshold which has a default value of 80%. The time of the last detection of the `target` object is in the `last detection` attribute. The type and number of objects (of any confidence) is listed in the `summary` attributes. Optionally the processed image can be saved to disk. If `save_file_folder` is configured an image with filename of format `deepstack_object_{source name}_latest_{target}.jpg` is over-written on each new detection of the `target`. Optionally this image can also be saved with a timestamp in the filename, if `save_timestamped_file` is configred as `True`. An event `image_processing.object_detected` is fired for each object detected. If you are a power user with advanced needs such as zoning detections or you want to track multiple object types, you will need to use the `image_processing.object_detected` events.
+The `deepstack_object` component adds an `image_processing` entity where the state of the entity is the total number of `target` objects that are above a `confidence` threshold which has a default value of 80%. The time of the last detection of the `target` object is in the `last detection` attribute. The type and number of objects (of any confidence) is listed in the `summary` attributes. Optionally the processed image can be saved to disk. If `save_file_folder` is configured an image with filename of format `deepstack_object_{source name}_latest_{target}.jpg` is over-written on each new detection of the `target`. Optionally this image can also be saved with a timestamp in the filename, if `save_timestamped_file` is configred as `True`. An event `deepstack.object_detected` is fired for each object detected. If you are a power user with advanced needs such as zoning detections or you want to track multiple object types, you will need to use the `deepstack.object_detected` events.
 
 **Note** that by default the component will **not** automatically scan images, but requires you to call the `image_processing.scan` service e.g. using an automation triggered by motion. Alternativley, periodic scanning can be enabled by configuring a `scan_interval`. The use of `scan_interval` [is described here](https://www.home-assistant.io/components/image_processing/#scan_interval-and-optimising-resources).
 
@@ -50,6 +50,9 @@ image_processing:
     # scan_interval: 30 # Optional, in seconds
     save_file_folder: /config/snapshots/
     save_timestamped_file: True
+    target:
+      - person
+      - car
     source:
       - entity_id: camera.local_file
         name: deepstack_person_detector
@@ -75,13 +78,13 @@ Configuration variables:
 <img src="https://github.com/robmarkcole/HASS-Deepstack-object/blob/master/docs/object_detail.png" width="350">
 </p>
 
-#### Event `image_processing.file_saved`
-If `save_file_folder` is configured, an new image will be saved with bounding boxes of detected `target` objects, and the filename will include the time of the image capture. On saving this image a `image_processing.file_saved` event is fired, with a payload that includes:
+#### Event `deepstack.file_saved`
+If `save_file_folder` is configured, an new image will be saved with bounding boxes of detected `target` objects, and the filename will include the time of the image capture. On saving this image a `deepstack.file_saved` event is fired, with a payload that includes:
 
 - `entity_id` : the entity id responsible for the event
 - `file` : the full path to the saved file
 
-An example automation using the `image_processing.file_saved` event is given below, which sends a Telegram message with the saved file:
+An example automation using the `deepstack.file_saved` event is given below, which sends a Telegram message with the saved file:
 
 ```yaml
 - action:
@@ -94,11 +97,11 @@ An example automation using the `image_processing.file_saved` event is given bel
   id: '1120092824611'
   trigger:
   - platform: event
-    event_type: image_processing.file_saved
+    event_type: deepstack.file_saved
 ```
 
-#### Event `image_processing.object_detected`
-An event `image_processing.object_detected` is fired for each object detected above the configured `confidence` threshold. This is the recommended way to check the confidence of detections, and to keep track of objects that are not configured as the `target` (configure logger level to `debug` to observe events in the Home Assistant logs). An example use case for event is to get an alert when some rarely appearing object is detected, or to increment a [counter](https://www.home-assistant.io/components/counter/). The `image_processing.object_detected` event payload includes:
+#### Event `deepstack.object_detected`
+An event `deepstack.object_detected` is fired for each object detected above the configured `confidence` threshold. This is the recommended way to check the confidence of detections, and to keep track of objects that are not configured as the `target` (configure logger level to `debug` to observe events in the Home Assistant logs). An example use case for event is to get an alert when some rarely appearing object is detected, or to increment a [counter](https://www.home-assistant.io/components/counter/). The `deepstack.object_detected` event payload includes:
 
 - `entity_id` : the entity id responsible for the event
 - `object` : the object detected
@@ -106,7 +109,7 @@ An event `image_processing.object_detected` is fired for each object detected ab
 - `box` : the bounding box of the object
 - `centroid` : the centre point of the object
 
-An example automation using the `image_processing.object_detected` event is given below:
+An example automation using the `deepstack.object_detected` event is given below:
 
 ```yaml
 - action:
@@ -119,7 +122,7 @@ An example automation using the `image_processing.object_detected` event is give
   id: '1120092824622'
   trigger:
   - platform: event
-    event_type: image_processing.object_detected
+    event_type: deepstack.object_detected
     event_data:
       object: person
 ```

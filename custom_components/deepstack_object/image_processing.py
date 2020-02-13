@@ -52,8 +52,8 @@ DATETIME_FORMAT = "%Y-%m-%d_%H:%M:%S"
 DEFAULT_API_KEY = ""
 DEFAULT_TARGET = ["person"]
 DEFAULT_TIMEOUT = 10
-EVENT_OBJECT_DETECTED = "image_processing.object_detected"
-EVENT_FILE_SAVED = "image_processing.file_saved"
+EVENT_OBJECT_DETECTED = "deepstack.object_detected"
+EVENT_FILE_SAVED = "deepstack.file_saved"
 BOX = "box"
 FILE = "file"
 OBJECT = "object"
@@ -274,10 +274,7 @@ class ObjectClassifyEntity(ImageProcessingEntity):
     @property
     def unit_of_measurement(self):
         """Return the unit of measurement."""
-        target = self._target if len(self._target) == 1 else "target"
-        if self._state is not None and self._state > 1:
-            return target + "s"
-        return target
+        return ""
 
     @property
     def device_state_attributes(self):
