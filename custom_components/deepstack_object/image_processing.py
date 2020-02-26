@@ -234,6 +234,8 @@ class ObjectClassifyEntity(ImageProcessingEntity):
             out_file.close()
             self.fire_saved_file_event(timestamp_save_path)
             _LOGGER.info("Saved bounding box image to %s", timestamp_save_path)
+        else:
+            self.fire_saved_file_event(latest_save_path)
 
     def fire_prediction_events(self, predictions, confidence):
         """Fire events based on predictions if above confidence threshold."""
