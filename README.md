@@ -24,7 +24,15 @@ docker run -v localstorage:/datastore -p 5000:5000 deepquestai/deepstack:noavx
 
 Now go to http://YOUR_SERVER_IP_ADDRESS:5000/ on another computer or the same one running Deepstack. Input your activation key from your portal into the text box below "Enter New Activation Key" and press enter. Now stop your docker container, and restart and run Deepstack (noavx mode) with the object detection service active on port `5000`:
 ```
-docker run -e VISION-DETECTION=True -e API-KEY="Mysecretkey" -v localstorage:/datastore -p 5000:5000 --name deepstack -d deepquestai/deepstack:noavx
+docker run -e VISION-DETECTION=True -e API-KEY="" -v localstorage:/datastore -p 5000:5000 --name deepstack -d deepquestai/deepstack:noavx
+```
+You can test the endpoint is active using [curl](https://curl.haxx.se/), from within a directory containing an image `test.jpg`:
+```
+curl -X POST -F image=@couple.jpg 'http://localhost:5000/v1/vision/detection'
+```
+Which should return something like:
+```json
+{"success":true,"predictions":[{"confidence":0.99967474,"label":"person","y_min":25,"x_min":1184,"y_max":2692,"x_max":2277},{"confidence":0.997645,"label":"person","y_min":148,"x_min":460,"y_max":2655,"x_max":1348},{"confidence":0.9949693,"label":"tie","y_min":757,"x_min":1731,"y_max":1407,"x_max":1857}]}
 ```
 
 ## Usage of this component
