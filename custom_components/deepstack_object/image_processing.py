@@ -43,13 +43,13 @@ from homeassistant.core import split_entity_id
 _LOGGER = logging.getLogger(__name__)
 
 CONF_API_KEY = "api_key"
-CONF_TARGET = "target"
+CONF_TARGETS = "targets"
 CONF_TIMEOUT = "timeout"
 CONF_SAVE_FILE_FOLDER = "save_file_folder"
 CONF_SAVE_TIMESTAMPTED_FILE = "save_timestamped_file"
 DATETIME_FORMAT = "%Y-%m-%d_%H:%M:%S"
 DEFAULT_API_KEY = ""
-DEFAULT_TARGET = ["person"]
+DEFAULT_TARGETS = ["person"]
 DEFAULT_TIMEOUT = 10
 EVENT_OBJECT_DETECTED = "deepstack.object_detected"
 BOX = "box"
@@ -64,7 +64,7 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
         vol.Required(CONF_PORT): cv.port,
         vol.Optional(CONF_API_KEY, default=DEFAULT_API_KEY): cv.string,
         vol.Optional(CONF_TIMEOUT, default=DEFAULT_TIMEOUT): cv.positive_int,
-        vol.Optional(CONF_TARGET, default=DEFAULT_TARGET): vol.All(
+        vol.Optional(CONF_TARGETS, default=DEFAULT_TARGETS): vol.All(
             cv.ensure_list, [cv.string]
         ),
         vol.Optional(CONF_SAVE_FILE_FOLDER): cv.isdir,
@@ -103,6 +103,7 @@ def setup_platform(hass, config, add_devices, discovery_info=None):
     if save_file_folder:
         save_file_folder = Path(save_file_folder)
 
+    targets = [t.lower() for t in config[CONF_TARGETS]]  # ensure lower case
     entities = []
     for camera in config[CONF_SOURCE]:
         object_entity = ObjectClassifyEntity(
@@ -110,7 +111,7 @@ def setup_platform(hass, config, add_devices, discovery_info=None):
             config.get(CONF_PORT),
             config.get(CONF_API_KEY),
             config.get(CONF_TIMEOUT),
-            config.get(CONF_TARGET),
+            targets,
             config.get(ATTR_CONFIDENCE),
             save_file_folder,
             config.get(CONF_SAVE_TIMESTAMPTED_FILE),
@@ -130,7 +131,7 @@ class ObjectClassifyEntity(ImageProcessingEntity):
         port,
         api_key,
         timeout,
-        target,
+        targets,
         confidence,
         save_file_folder,
         save_timestamped_file,
@@ -140,7 +141,7 @@ class ObjectClassifyEntity(ImageProcessingEntity):
         """Init with the API key and model id."""
         super().__init__()
         self._dsobject = ds.DeepstackObject(ip_address, port, api_key, timeout)
-        self._target = target
+        self._targets = targets
         self._confidence = confidence
         self._camera = camera_entity
         if name:
@@ -149,8 +150,8 @@ class ObjectClassifyEntity(ImageProcessingEntity):
             camera_name = split_entity_id(camera_entity)[1]
             self._name = "deepstack_object_{}".format(camera_name)
         self._state = None
-        self._targets_confidences = [None] * len(self._target)
-        self._targets_found = [0] * len(self._target)
+        self._targets_confidences = [None] * len(self._targets)
+        self._targets_found = [0] * len(self._targets)
         self._predictions = {}
         self._summary = {}
         self._last_detection = None
@@ -166,8 +167,8 @@ class ObjectClassifyEntity(ImageProcessingEntity):
             io.BytesIO(bytearray(image))
         ).size
         self._state = None
-        self._targets_confidences = [None] * len(self._target)
-        self._targets_found = [0] * len(self._target)
+        self._targets_confidences = [None] * len(self._targets)
+        self._targets_found = [0] * len(self._targets)
         self._predictions = {}
         self._summary = {}
         try:
@@ -179,7 +180,7 @@ class ObjectClassifyEntity(ImageProcessingEntity):
         self._predictions = self._dsobject.predictions.copy()
 
         if self._predictions:
-            for i, target in enumerate(self._target):
+            for i, target in enumerate(self._targets):
                 raw_confidences = ds.get_object_confidences(self._predictions, target)
                 self._targets_confidences[i] = [
                     ds.format_confidence(confidence) for confidence in raw_confidences
@@ -194,9 +195,9 @@ class ObjectClassifyEntity(ImageProcessingEntity):
                 self._last_detection = dt_util.now().strftime(DATETIME_FORMAT)
             self._summary = ds.get_objects_summary(self._predictions)
             self.fire_prediction_events(self._predictions, self._confidence)
-            if hasattr(self, "_save_file_folder") and self._state > 0:
+            if self._save_file_folder and self._state > 0:
                 self.save_image(
-                    image, self._predictions, self._target, self._save_file_folder
+                    image, self._predictions, self._targets, self._save_file_folder
                 )
 
     def save_image(self, image, predictions, target, directory):
@@ -279,6 +280,6 @@ class ObjectClassifyEntity(ImageProcessingEntity):
         """Return device specific state attributes."""
         attr = {}
         if self._last_detection:
-            attr["last_detection"] = self._last_detection
+            attr["last_target_detection"] = self._last_detection
         attr["summary"] = self._summary
         return attr
