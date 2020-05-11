@@ -130,6 +130,25 @@ camera:
     name: deepstack_latest_person
 ```
 
+## Automation using deepstack latest jpg file
+I am using an automation to send a photo notification when there is a new detection. This requires you to setup the [folder_watcher](https://www.home-assistant.io/integrations/folder_watcher/) integration first. Then in `automations.yaml` I have:
+
+```yaml
+- id: '3287784389530'
+  alias: Deepstack person alert
+  trigger:
+    event_type: folder_watcher
+    platform: event
+    event_data:
+      event_type: modified
+      path: '/config/www/deepstack_object_local_file_latest.jpg'
+  action:
+    service: telegram_bot.send_photo
+    data_template:
+      caption: Person detected
+      file: '/config/www/deepstack_object_local_file_latest.jpg'
+```
+
 ## Face recognition
 For face recognition with Deepstack use https://github.com/robmarkcole/HASS-Deepstack-face
 
