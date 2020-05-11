@@ -8,8 +8,10 @@ import datetime
 import io
 import logging
 import os
+import re
 from datetime import timedelta
 from typing import Tuple
+from pathlib import Path
 
 from PIL import Image, ImageDraw
 
@@ -50,7 +52,6 @@ DEFAULT_API_KEY = ""
 DEFAULT_TARGET = ["person"]
 DEFAULT_TIMEOUT = 10
 EVENT_OBJECT_DETECTED = "deepstack.object_detected"
-EVENT_FILE_SAVED = "deepstack.file_saved"
 BOX = "box"
 FILE = "file"
 OBJECT = "object"
@@ -70,6 +71,10 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
         vol.Optional(CONF_SAVE_TIMESTAMPTED_FILE, default=False): cv.boolean,
     }
 )
+
+
+def get_valid_filename(name: str) -> str:
+    return re.sub(r"(?u)[^-\w.]", "", str(name).strip().replace(" ", "_"))
 
 
 def get_box(prediction: dict, img_width: int, img_height: int):
@@ -96,7 +101,7 @@ def setup_platform(hass, config, add_devices, discovery_info=None):
     """Set up the classifier."""
     save_file_folder = config.get(CONF_SAVE_FILE_FOLDER)
     if save_file_folder:
-        save_file_folder = os.path.join(save_file_folder, "")  # If no trailing / add it
+        save_file_folder = Path(save_file_folder)
 
     entities = []
     for camera in config[CONF_SOURCE]:
@@ -215,21 +220,19 @@ class ObjectClassifyEntity(ImageProcessingEntity):
                     color=RED,
                 )
 
-        latest_save_path = directory + "{}_latest_{}.jpg".format(self._name, target[0])
+        latest_save_path = Path(
+            directory / get_valid_filename(f"{self._name}_latest.jpg")
+        )
         img.save(latest_save_path)
+        _LOGGER.info("Deepstack saved image %s", latest_save_path)
 
         if self._save_timestamped_file:
-            timestamp_save_path = directory + "{}_{}_{}.jpg".format(
-                self._name, target[0], self._last_detection
+            timestamp_save_path = Path(
+                directory
+                / get_valid_filename(f"{self._name}_{self._last_detection}.jpg")
             )
-
-            out_file = open(timestamp_save_path, "wb")
-            img.save(out_file, format="JPEG")
-            out_file.flush()
-            os.fsync(out_file)
-            out_file.close()
-            self.fire_saved_file_event(timestamp_save_path)
-            _LOGGER.info("Saved bounding box image to %s", timestamp_save_path)
+            img.save(timestamp_save_path, format="JPEG")
+            _LOGGER.info("Deepstack saved image %s", timestamp_save_path)
 
     def fire_prediction_events(self, predictions, confidence):
         """Fire events based on predictions if above confidence threshold."""
@@ -245,12 +248,6 @@ class ObjectClassifyEntity(ImageProcessingEntity):
                         BOX: box,
                     },
                 )
-
-    def fire_saved_file_event(self, save_path):
-        """Fire event when saving a file."""
-        self.hass.bus.fire(
-            EVENT_FILE_SAVED, {ATTR_ENTITY_ID: self.entity_id, FILE: save_path}
-        )
 
     @property
     def camera_entity(self):
