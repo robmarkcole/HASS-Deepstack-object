@@ -24,7 +24,7 @@ docker run -v localstorage:/datastore -p 5000:5000 deepquestai/deepstack:noavx
 
 Now go to http://YOUR_SERVER_IP_ADDRESS:5000/ on another computer or the same one running Deepstack. Input your activation key from your portal into the text box below "Enter New Activation Key" and press enter. Now stop your docker container, and restart and run Deepstack (noavx mode) with the object detection service active on port `5000`:
 ```
-docker run -e VISION-DETECTION=True -e API-KEY="" -v localstorage:/datastore -p 5000:5000 --name deepstack -d deepquestai/deepstack:noavx
+docker run -e VISION-DETECTION=True -e API-KEY="Mysecretkey" -v localstorage:/datastore -p 5000:5000 --name deepstack deepquestai/deepstack:noavx
 ```
 You can test the endpoint is active using [curl](https://curl.haxx.se/), from within a directory containing an image `test.jpg`:
 ```
@@ -38,7 +38,7 @@ Which should return something like:
 ## Usage of this component
 The `deepstack_object` component adds an `image_processing` entity where the state of the entity is the total number of `target` objects that are above a `confidence` threshold which has a default value of 80%. The time of the last detection of the `target` object is in the `last detection` attribute. The type and number of objects (of any confidence) is listed in the `summary` attributes. Optionally the processed image can be saved to disk. If `save_file_folder` is configured an image with filename of format `deepstack_object_{source name}_latest_{target}.jpg` is over-written on each new detection of the `target`. Optionally this image can also be saved with a timestamp in the filename, if `save_timestamped_file` is configred as `True`. An event `deepstack.object_detected` is fired for each object detected. If you are a power user with advanced needs such as zoning detections or you want to track multiple object types, you will need to use the `deepstack.object_detected` events.
 
-**Note** that by default the component will **not** automatically scan images, but requires you to call the `image_processing.scan` service e.g. using an automation triggered by motion. Alternativley, periodic scanning can be enabled by configuring a `scan_interval`. The use of `scan_interval` [is described here](https://www.home-assistant.io/components/image_processing/#scan_interval-and-optimising-resources).
+**Note** that by default the component will **not** automatically scan images, but requires you to call the `image_processing.scan` service e.g. using an automation triggered by motion.
 
 ## Home Assistant setup
 Place the `custom_components` folder in your configuration directory (or add its contents to an existing `custom_components` folder). Then configure object detection. **Important:** It is necessary to configure only a single camera per `deepstack_object` entity. If you want to process multiple cameras, you will therefore need multiple `deepstack_object` `image_processing` entities.
@@ -53,7 +53,6 @@ image_processing:
     ip_address: localhost
     port: 5000
     api_key: Mysecretkey
-    # scan_interval: 30 # Optional, in seconds
     save_file_folder: /config/snapshots/
     save_timestamped_file: True
     target:
