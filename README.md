@@ -83,28 +83,6 @@ Configuration variables:
 <img src="https://github.com/robmarkcole/HASS-Deepstack-object/blob/master/docs/object_detail.png" width="350">
 </p>
 
-#### Event `deepstack.file_saved`
-If `save_file_folder` is configured, an new image will be saved with bounding boxes of detected `target` objects, and the filename will include the time of the image capture. On saving this image a `deepstack.file_saved` event is fired, with a payload that includes:
-
-- `entity_id` : the entity id responsible for the event
-- `file` : the full path to the saved file
-
-An example automation using the `deepstack.file_saved` event is given below, which sends a Telegram message with the saved file:
-
-```yaml
-- action:
-  - data_template:
-      caption: "Captured {{ trigger.event.data.file }}"
-      file: "{{ trigger.event.data.file }}"
-    service: telegram_bot.send_photo
-  alias: New person alert
-  condition: []
-  id: '1120092824611'
-  trigger:
-  - platform: event
-    event_type: deepstack.file_saved
-```
-
 #### Event `deepstack.object_detected`
 An event `deepstack.object_detected` is fired for each object detected above the configured `confidence` threshold. This is the recommended way to check the confidence of detections, and to keep track of objects that are not configured as the `target` (configure logger level to `debug` to observe events in the Home Assistant logs). An example use case for event is to get an alert when some rarely appearing object is detected, or to increment a [counter](https://www.home-assistant.io/components/counter/). The `deepstack.object_detected` event payload includes:
 
