@@ -64,7 +64,6 @@ image_processing:
       - car
     source:
       - entity_id: camera.local_file
-        name: deepstack_person_detector
 ```
 
 Configuration variables:
@@ -88,7 +87,7 @@ Configuration variables:
 </p>
 
 #### Event `deepstack.object_detected`
-An event `deepstack.object_detected` is fired for each object detected above the configured `confidence` threshold. This is the recommended way to check the confidence of detections, and to keep track of objects that are not configured as the `target` (configure logger level to `debug` to observe events in the Home Assistant logs). An example use case for event is to get an alert when some rarely appearing object is detected, or to increment a [counter](https://www.home-assistant.io/components/counter/). The `deepstack.object_detected` event payload includes:
+An event `deepstack.object_detected` is fired for each object detected above the configured `confidence` threshold. This is the recommended way to check the confidence of detections, and to keep track of objects that are not configured as the `target` (use `Developer tools -> EVENTS -> :Listen to events`, to monitor these events). An example use case for event is to get an alert when some rarely appearing object is detected, or to increment a [counter](https://www.home-assistant.io/components/counter/). The `deepstack.object_detected` event payload includes:
 
 - `entity_id` : the entity id responsible for the event
 - `object` : the object detected
