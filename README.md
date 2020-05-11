@@ -4,7 +4,7 @@
 ```
 docker pull deepquestai/deepstack
 
-OR 
+OR, if you are using a CPU:
 
 docker pull deepquestai/deepstack:noavx
 ```
@@ -159,14 +159,6 @@ For code related issues such as suspected bugs, please open an issue on this rep
 ### Docker tips
 Add the `-d` flag to run the container in background, thanks [@arsaboo](https://github.com/arsaboo).
 
-### Deepstack health check
-
-To check Deepstack is functioning, run without an api_key and make a request using cURL from the command line:
-```
-curl -X POST -F image=@development/test-image3.jpg 'http://localhost:5000/v1/vision/detection'
-```
-This should return the predictions for that image.
-
 ### FAQ
 Q1: I get the following warning, is this normal?
 ```
@@ -178,7 +170,7 @@ A1: Yes this is normal
 
 Q2: Will Deepstack always be free, if so how do these guys make a living?
 
-A2: I'm informed there will always be a basic free version with preloaded models, while there will be an enterprise version with advanced features such as custom models and endpoints, which will be subscription based.
+A2: Enterprise support pays the developers salaries.
 
 ------
 
