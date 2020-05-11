@@ -3,9 +3,9 @@
 
 ```
 docker pull deepquestai/deepstack
-
+```
 OR, if you are using a CPU:
-
+```
 docker pull deepquestai/deepstack:noavx
 ```
 **Recommended OS** Deepstack docker containers are optimised for Linux or Windows 10 Pro. Mac and regular windows users my experience performance issues. [You can also run deepstack on a Raspberry pi](https://python.deepstack.cc/raspberry-pi) if you own an Intel NCS (Movidius) stick (approx $70).
@@ -32,11 +32,15 @@ curl -X POST -F image=@couple.jpg 'http://localhost:5000/v1/vision/detection'
 ```
 Which should return something like:
 ```json
-{"success":true,"predictions":[{"confidence":0.99967474,"label":"person","y_min":25,"x_min":1184,"y_max":2692,"x_max":2277},{"confidence":0.997645,"label":"person","y_min":148,"x_min":460,"y_max":2655,"x_max":1348},{"confidence":0.9949693,"label":"tie","y_min":757,"x_min":1731,"y_max":1407,"x_max":1857}]}
+{"success":true,
+"predictions":[
+    {"confidence":0.99967474,"label":"person","y_min":25,"x_min":1184,"y_max":2692,"x_max":2277},
+    {"confidence":0.997645,"label":"person","y_min":148,"x_min":460,"y_max":2655,"x_max":1348},
+    {"confidence":0.9949693,"label":"tie","y_min":757,"x_min":1731,"y_max":1407,"x_max":1857}]}
 ```
 
 ## Usage of this component
-The `deepstack_object` component adds an `image_processing` entity where the state of the entity is the total number of `target` objects that are above a `confidence` threshold which has a default value of 80%. The time of the last detection of the `target` object is in the `last detection` attribute. The type and number of objects (of any confidence) is listed in the `summary` attributes. Optionally the processed image can be saved to disk. If `save_file_folder` is configured an image with filename of format `deepstack_object_{source name}_latest_{target}.jpg` is over-written on each new detection of the `target`. Optionally this image can also be saved with a timestamp in the filename, if `save_timestamped_file` is configred as `True`. An event `deepstack.object_detected` is fired for each object detected. If you are a power user with advanced needs such as zoning detections or you want to track multiple object types, you will need to use the `deepstack.object_detected` events.
+The `deepstack_object` component adds an `image_processing` entity where the state of the entity is the total number of `target` objects that are above a `confidence` threshold which has a default value of 80%. The time of the last detection of the `target` object is in the `last detection` attribute. The type and number of objects (of any confidence) is listed in the `summary` attributes. Optionally the processed image can be saved to disk. If `save_file_folder` is configured an image with filename of format `deepstack_object_{source name}_latest.jpg` is over-written on each new detection of the `target`. Optionally this image can also be saved with a timestamp in the filename, if `save_timestamped_file` is configred as `True`. An event `deepstack.object_detected` is fired for each object detected. If you are a power user with advanced needs such as zoning detections or you want to track multiple object types, you will need to use the `deepstack.object_detected` events.
 
 **Note** that by default the component will **not** automatically scan images, but requires you to call the `image_processing.scan` service e.g. using an automation triggered by motion.
 
@@ -52,7 +56,7 @@ image_processing:
   - platform: deepstack_object
     ip_address: localhost
     port: 5000
-    api_key: Mysecretkey
+    api_key: mysecretkey
     save_file_folder: /config/snapshots/
     save_timestamped_file: True
     target:
@@ -67,7 +71,7 @@ Configuration variables:
 - **ip_address**: the ip address of your deepstack instance.
 - **port**: the port of your deepstack instance.
 - **api_key**: (Optional) Any API key you have set.
-- **timeout**: (Optional, default 10 seconds) The timout for requests to deepstack.
+- **timeout**: (Optional, default 10 seconds) The timeout for requests to deepstack.
 - **save_file_folder**: (Optional) The folder to save processed images to. Note that folder path should be added to [whitelist_external_dirs](https://www.home-assistant.io/docs/configuration/basic/)
 - **save_timestamped_file**: (Optional, default `False`, requires `save_file_folder` to be configured) Save the processed image with the time of detection in the filename.
 - **source**: Must be a camera.
@@ -117,11 +121,11 @@ The `box` coordinates and the box center (`centroid`) can be used to determine w
 
 
 ## Displaying the deepstack latest jpg file
-It easy to display the `deepstack_object_{source name}_latest_{target}.jpg` image with a [local_file](https://www.home-assistant.io/components/local_file/) camera. An example configuration is:
+It easy to display the `deepstack_object_{source name}_latest.jpg` image with a [local_file](https://www.home-assistant.io/components/local_file/) camera. An example configuration is:
 ```yaml
 camera:
   - platform: local_file
-    file_path: /config/snapshots/deepstack_object_local_file_latest_person.jpg
+    file_path: /config/snapshots/deepstack_object_local_file_latest.jpg
     name: deepstack_latest_person
 ```
 
@@ -135,7 +139,7 @@ If you have a [Google Coral USB stick](https://coral.withgoogle.com/products/acc
 For code related issues such as suspected bugs, please open an issue on this repo. For general chat or to discuss Home Assistant specific issues related to configuration or use cases, please [use this thread on the Home Assistant forums](https://community.home-assistant.io/t/face-and-person-detection-with-deepstack-local-and-free/92041).
 
 ### Docker tips
-Add the `-d` flag to run the container in background, thanks [@arsaboo](https://github.com/arsaboo).
+Add the `-d` flag to run the container in background
 
 ### FAQ
 Q1: I get the following warning, is this normal?
