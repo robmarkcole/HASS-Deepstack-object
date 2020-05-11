@@ -40,7 +40,7 @@ Which should return something like:
 ```
 
 ## Usage of this component
-The `deepstack_object` component adds an `image_processing` entity where the state of the entity is the total number of `target` objects that are above a `confidence` threshold which has a default value of 80%. The time of the last detection of the `target` object is in the `last detection` attribute. The type and number of objects (of any confidence) is listed in the `summary` attributes. Optionally the processed image can be saved to disk. If `save_file_folder` is configured an image with filename of format `deepstack_object_{source name}_latest.jpg` is over-written on each new detection of the `target`. Optionally this image can also be saved with a timestamp in the filename, if `save_timestamped_file` is configred as `True`. An event `deepstack.object_detected` is fired for each object detected. If you are a power user with advanced needs such as zoning detections or you want to track multiple object types, you will need to use the `deepstack.object_detected` events.
+The `deepstack_object` component adds an `image_processing` entity where the state of the entity is the total number of `target` objects that are above a `confidence` threshold which has a default value of 80%. The time of the last detection of the `target` object is in the `last target detection` attribute. The type and number of objects (of any confidence) is listed in the `summary` attributes. Optionally the processed image can be saved to disk. If `save_file_folder` is configured an image with filename of format `deepstack_object_{source name}_latest.jpg` is over-written on each new detection of the `target`. Optionally this image can also be saved with a timestamp in the filename, if `save_timestamped_file` is configred as `True`. An event `deepstack.object_detected` is fired for each object detected. If you are a power user with advanced needs such as zoning detections or you want to track multiple object types, you will need to use the `deepstack.object_detected` events.
 
 **Note** that by default the component will **not** automatically scan images, but requires you to call the `image_processing.scan` service e.g. using an automation triggered by motion.
 
@@ -59,7 +59,7 @@ image_processing:
     api_key: mysecretkey
     save_file_folder: /config/snapshots/
     save_timestamped_file: True
-    target:
+    targets:
       - person
       - car
     source:
@@ -75,7 +75,7 @@ Configuration variables:
 - **save_file_folder**: (Optional) The folder to save processed images to. Note that folder path should be added to [whitelist_external_dirs](https://www.home-assistant.io/docs/configuration/basic/)
 - **save_timestamped_file**: (Optional, default `False`, requires `save_file_folder` to be configured) Save the processed image with the time of detection in the filename.
 - **source**: Must be a camera.
-- **target**: The target object class, default `person`. Can also be a list of targets.
+- **targets**: The list of target objects, default `person`.
 - **confidence**: (Optional) The confidence (in %) above which detected targets are counted in the sensor state. Default value: 80
 - **name**: (Optional) A custom name for the the entity.
 
