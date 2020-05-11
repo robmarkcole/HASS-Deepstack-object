@@ -4,16 +4,13 @@ Component that will perform object detection and identification via deepstack.
 For more details about this platform, please refer to the documentation at
 https://home-assistant.io/components/image_processing.deepstack_object
 """
-import base64
 import datetime
 import io
-import json
 import logging
 import os
 from datetime import timedelta
 from typing import Tuple
 
-import requests
 from PIL import Image, ImageDraw
 
 import deepstack.core as ds
@@ -58,7 +55,6 @@ BOX = "box"
 FILE = "file"
 OBJECT = "object"
 RED = (255, 0, 0)
-SCAN_INTERVAL = timedelta(days=365)  # NEVER SCAN.
 
 
 PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
@@ -274,7 +270,12 @@ class ObjectClassifyEntity(ImageProcessingEntity):
     @property
     def unit_of_measurement(self):
         """Return the unit of measurement."""
-        return ""
+        return "targets"
+
+    @property
+    def should_poll(self):
+        """Return the polling state."""
+        return False
 
     @property
     def device_state_attributes(self):
