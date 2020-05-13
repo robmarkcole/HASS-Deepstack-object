@@ -248,6 +248,10 @@ class ObjectClassifyEntity(ImageProcessingEntity):
     def device_state_attributes(self):
         """Return device specific state attributes."""
         attr = {}
+        for target in self._targets:
+            attr[f"ALL {target} count"] = len(
+                [t for t in self._objects if t["name"] == target]
+            )
         if self._last_detection:
             attr["last_target_detection"] = self._last_detection
         attr["summary"] = self._summary
