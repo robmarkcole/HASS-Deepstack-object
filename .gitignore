@@ -17,6 +17,5 @@ bin-release/
 # should NOT be excluded as they contain compiler settings and other important
 # information for Eclipse / Flash Builder.
 *.pyc
-development/.ipynb_checkpoints/Deepstack face dev-checkpoint.ipynb
-development/.ipynb_checkpoints/Deepstack face dev-checkpoint.ipynb
-.ipynb_checkpoints*
+venv*
+.vscode*

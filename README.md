@@ -193,3 +193,10 @@ Q5: I am getting an error from Home Assistant: `Platform error: image_processing
 A5: This can happen when you are running in Docker/Hassio, and indicates that one of the dependencies isn't installed. It is necessary to reboot your Hassio device, or rebuild your Docker container. Note that just restarting Home Assistant will not resolve this.
 
 ------
+
+## Development
+Currently only the helper functions are tested, using pytest.
+* `python3 -m venv venv`
+* `source venv/bin/activate`
+* `pip install -r requirements-dev.txt`
+* `venv/bin/py.test custom_components/deepstack_object/tests.py -vv -p no:warnings`

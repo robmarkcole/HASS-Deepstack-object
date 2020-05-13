@@ -1,0 +1,4 @@
+pytest
+pillow==7.1.1
+homeassistant
+deepstack-python==0.4

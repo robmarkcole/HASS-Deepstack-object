@@ -77,24 +77,39 @@ def get_valid_filename(name: str) -> str:
     return re.sub(r"(?u)[^-\w.]", "", str(name).strip().replace(" ", "_"))
 
 
-def get_box(prediction: dict, img_width: int, img_height: int):
-    """
-    Return the relative bounxing box coordinates.
+def get_objects(predictions: list, img_width: int, img_height: int):
+    """Return objects with formatting and extra info."""
+    objects = []
+    decimal_places = 3
+    for pred in predictions:
+        box_width = pred["x_max"] - pred["x_min"]
+        box_height = pred["y_max"] - pred["y_min"]
+        box = {
+            "height": round(box_height / img_height, decimal_places),
+            "width": round(box_width / img_width, decimal_places),
+            "y_min": round(pred["y_min"] / img_height, decimal_places),
+            "x_min": round(pred["x_min"] / img_width, decimal_places),
+            "y_max": round(pred["y_max"] / img_height, decimal_places),
+            "x_max": round(pred["x_max"] / img_width, decimal_places),
+        }
+        box_area = round(box["height"] * box["width"], decimal_places)
+        centroid = {
+            "x": round(box["x_min"] + (box["width"] / 2), decimal_places),
+            "y": round(box["y_min"] + (box["height"] / 2), decimal_places),
+        }
+        name = pred["label"]
+        confidence = round(pred["confidence"] * 100, decimal_places)
 
-    Defined by the tuple (y_min, x_min, y_max, x_max)
-    where the coordinates are floats in the range [0.0, 1.0] and
-    relative to the width and height of the image.
-    """
-    box = [
-        prediction["y_min"] / img_height,
-        prediction["x_min"] / img_width,
-        prediction["y_max"] / img_height,
-        prediction["x_max"] / img_width,
-    ]
-
-    rounding_decimals = 3
-    box = [round(coord, rounding_decimals) for coord in box]
-    return box
+        objects.append(
+            {
+                "bounding_box": box,
+                "box_area": box_area,
+                "centroid": centroid,
+                "name": name,
+                "confidence": confidence,
+            }
+        )
+    return objects
 
 
 def setup_platform(hass, config, add_devices, discovery_info=None):
