@@ -4,6 +4,7 @@ Component that will perform object detection and identification via deepstack.
 For more details about this platform, please refer to the documentation at
 https://home-assistant.io/components/image_processing.deepstack_object
 """
+from collections import namedtuple
 import datetime
 import io
 import logging
@@ -47,18 +48,35 @@ CONF_TARGETS = "targets"
 CONF_TIMEOUT = "timeout"
 CONF_SAVE_FILE_FOLDER = "save_file_folder"
 CONF_SAVE_TIMESTAMPTED_FILE = "save_timestamped_file"
+CONF_ROI_Y_MIN = "roi_y_min"
+CONF_ROI_X_MIN = "roi_x_min"
+CONF_ROI_Y_MAX = "roi_y_max"
+CONF_ROI_X_MAX = "roi_x_max"
 
 DATETIME_FORMAT = "%Y-%m-%d_%H:%M:%S"
 DEFAULT_API_KEY = ""
 DEFAULT_TARGETS = ["person"]
 DEFAULT_TIMEOUT = 10
+DEFAULT_ROI_Y_MIN = 0.0
+DEFAULT_ROI_Y_MAX = 1.0
+DEFAULT_ROI_X_MIN = 0.0
+DEFAULT_ROI_X_MAX = 1.0
+DEFAULT_ROI = (
+    DEFAULT_ROI_Y_MIN,
+    DEFAULT_ROI_X_MIN,
+    DEFAULT_ROI_Y_MAX,
+    DEFAULT_ROI_X_MAX,
+)
 
 EVENT_OBJECT_DETECTED = "deepstack.object_detected"
 BOX = "box"
 FILE = "file"
 OBJECT = "object"
 
-RED = (255, 0, 0)
+# rgb(red, green, blue)
+RED = (255, 0, 0)  # For objects within the ROI
+GREEN = (0, 255, 0)  # For ROI box
+YELLOW = (255, 255, 0)  # For objects outside the ROI
 
 
 PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
@@ -70,10 +88,31 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
         vol.Optional(CONF_TARGETS, default=DEFAULT_TARGETS): vol.All(
             cv.ensure_list, [cv.string]
         ),
+        vol.Optional(CONF_ROI_Y_MIN, default=DEFAULT_ROI_Y_MIN): cv.small_float,
+        vol.Optional(CONF_ROI_X_MIN, default=DEFAULT_ROI_X_MIN): cv.small_float,
+        vol.Optional(CONF_ROI_Y_MAX, default=DEFAULT_ROI_Y_MAX): cv.small_float,
+        vol.Optional(CONF_ROI_X_MAX, default=DEFAULT_ROI_X_MAX): cv.small_float,
         vol.Optional(CONF_SAVE_FILE_FOLDER): cv.isdir,
         vol.Optional(CONF_SAVE_TIMESTAMPTED_FILE, default=False): cv.boolean,
     }
 )
+
+Box = namedtuple("Box", "y_min x_min y_max x_max")
+Point = namedtuple("Point", "y x")
+
+
+def point_in_box(box: Box, point: Point) -> bool:
+    """Return true if point lies in box"""
+    if (box.x_min <= point.x <= box.x_max) and (box.y_min <= point.y <= box.y_max):
+        return True
+    return False
+
+
+def object_in_roi(roi: dict, centroid: dict) -> bool:
+    """Convenience to convert dicts to the Point and Box."""
+    target_center_point = Point(centroid["y"], centroid["x"])
+    roi_box = Box(roi["y_min"], roi["x_min"], roi["y_max"], roi["x_max"])
+    return point_in_box(roi_box, target_center_point)
 
 
 def get_valid_filename(name: str) -> str:
@@ -131,6 +170,10 @@ def setup_platform(hass, config, add_devices, discovery_info=None):
             config.get(CONF_TIMEOUT),
             targets,
             config.get(ATTR_CONFIDENCE),
+            config[CONF_ROI_Y_MIN],
+            config[CONF_ROI_X_MIN],
+            config[CONF_ROI_Y_MAX],
+            config[CONF_ROI_X_MAX],
             save_file_folder,
             config.get(CONF_SAVE_TIMESTAMPTED_FILE),
             camera.get(CONF_ENTITY_ID),
@@ -151,6 +194,10 @@ class ObjectClassifyEntity(ImageProcessingEntity):
         timeout,
         targets,
         confidence,
+        roi_y_min,
+        roi_x_min,
+        roi_y_max,
+        roi_x_max,
         save_file_folder,
         save_timestamped_file,
         camera_entity,
@@ -172,6 +219,13 @@ class ObjectClassifyEntity(ImageProcessingEntity):
         self._objects = []  # The parsed raw data
         self._targets_found = []
         self._summary = {}
+
+        self._roi_dict = {
+            "y_min": roi_y_min,
+            "x_min": roi_x_min,
+            "y_max": roi_y_max,
+            "x_max": roi_x_max,
+        }
 
         self._last_detection = None
         self._image_width = None
@@ -201,7 +255,9 @@ class ObjectClassifyEntity(ImageProcessingEntity):
         self._targets_found = [
             obj
             for obj in self._objects
-            if (obj["name"] in self._targets) and (obj["confidence"] > self._confidence)
+            if (obj["name"] in self._targets)
+            and (obj["confidence"] > self._confidence)
+            and (object_in_roi(self._roi_dict, obj["centroid"]))
         ]
 
         self._state = len(self._targets_found)
@@ -249,6 +305,9 @@ class ObjectClassifyEntity(ImageProcessingEntity):
         """Return device specific state attributes."""
         attr = {}
         for target in self._targets:
+            attr[f"ROI {target} count"] = len(
+                [t for t in self._targets_found if t["name"] == target]
+            )
             attr[f"ALL {target} count"] = len(
                 [t for t in self._objects if t["name"] == target]
             )
@@ -267,6 +326,12 @@ class ObjectClassifyEntity(ImageProcessingEntity):
             return
         draw = ImageDraw.Draw(img)
 
+        roi_tuple = tuple(self._roi_dict.values())
+        if roi_tuple != DEFAULT_ROI:
+            draw_box(
+                draw, roi_tuple, img.width, img.height, text="ROI", color=GREEN,
+            )
+
         for obj in self._objects:
             if not obj["name"] in self._targets:
                 continue
@@ -275,20 +340,26 @@ class ObjectClassifyEntity(ImageProcessingEntity):
             box = obj["bounding_box"]
             centroid = obj["centroid"]
             box_label = f"{name}: {confidence:.1f}%"
+
+            if object_in_roi(self._roi_dict, centroid):
+                box_colour = RED
+            else:
+                box_colour = YELLOW
+
             draw_box(
                 draw,
                 (box["y_min"], box["x_min"], box["y_max"], box["x_max"]),
                 img.width,
                 img.height,
                 text=box_label,
-                color=RED,
+                color=box_colour,
             )
 
             # draw bullseye
             draw.text(
                 (centroid["x"] * img.width, centroid["y"] * img.height),
                 text="X",
-                fill=RED,
+                fill=box_colour,
             )
 
         latest_save_path = (
