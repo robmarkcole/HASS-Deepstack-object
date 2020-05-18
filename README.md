@@ -102,7 +102,7 @@ An event `deepstack.object_detected` is fired for each object detected above the
 An example use case for event is to get an alert when some rarely appearing object is detected, or to increment a [counter](https://www.home-assistant.io/components/counter/). The `deepstack.object_detected` event payload includes:
 
 - `entity_id` : the entity id responsible for the event
-- `object` : the object detected
+- `name` : the object detected
 - `confidence` : the confidence in detection in the range 0 - 1 where 1 is 100% confidence.
 - `box` : the bounding box of the object
 - `centroid` : the centre point of the object
@@ -113,7 +113,7 @@ An example automation using the `deepstack.object_detected` event is given below
 - action:
   - data_template:
       title: "New object detection"
-      message: "{{ trigger.event.data.object }} with confidence {{ trigger.event.data.confidence }}"
+      message: "{{ trigger.event.data.name }} with confidence {{ trigger.event.data.confidence }}"
     service: notify.pushbullet
   alias: Object detection automation
   condition: []
