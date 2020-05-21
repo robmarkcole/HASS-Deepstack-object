@@ -1,8 +1,13 @@
 {
         "domain": "deepstack_object",
-        "name": "deepstack_object custom component",
-        "documentation": "https://github.com/robmarkcole/HASS-Deepstack",
-        "requirements": ["pillow", "deepstack-python==0.4"],
+        "name": "deepstack object custom integration",
+        "documentation": "https://github.com/robmarkcole/HASS-Deepstack-object",
+        "requirements": [
+                "pillow",
+                "deepstack-python==0.5"
+        ],
         "dependencies": [],
-        "codeowners": ["@robmarkcole"]
+        "codeowners": [
+                "@robmarkcole"
+        ]
 }
