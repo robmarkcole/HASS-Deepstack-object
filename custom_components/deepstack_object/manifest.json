@@ -4,7 +4,7 @@
         "documentation": "https://github.com/robmarkcole/HASS-Deepstack-object",
         "requirements": [
                 "pillow",
-                "deepstack-python==0.5"
+                "deepstack-python==0.6"
         ],
         "dependencies": [],
         "codeowners": [
