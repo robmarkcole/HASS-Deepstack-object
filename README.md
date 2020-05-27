@@ -1,5 +1,5 @@
 # HASS-Deepstack-object
-[Home Assistant](https://www.home-assistant.io/) custom component for Deepstack object detection. [Deepstack](https://python.deepstack.cc/) is a service which runs in a docker container and exposes deep-learning models via a REST API. Deepstack [object detection](https://python.deepstack.cc/object-detection) uses [Yolo V3](https://pjreddie.com/darknet/yolo/) to identify 80 different kinds of objects, including people (`person`) and animals. There is no cost for using Deepstack, although you will need a machine with 8 GB RAM. On your machine with docker, pull the latest image (approx. 2GB):
+[Home Assistant](https://www.home-assistant.io/) custom component for Deepstack object detection. [Deepstack](https://python.deepstack.cc/) is a service which runs in a docker container and exposes deep-learning models via a REST API. Deepstack [object detection](https://python.deepstack.cc/object-detection) uses [Yolo V3](https://pjreddie.com/darknet/yolo/) to identify 80 different kinds of objects (listed at bottom of this readme), including people (`person`) and animals. There is no cost for using Deepstack, although you will need a machine with 8 GB RAM. On your machine with docker, pull the latest image (approx. 2GB):
 
 ```
 docker pull deepquestai/deepstack
@@ -203,6 +203,24 @@ Q5: I am getting an error from Home Assistant: `Platform error: image_processing
 A5: This can happen when you are running in Docker/Hassio, and indicates that one of the dependencies isn't installed. It is necessary to reboot your Hassio device, or rebuild your Docker container. Note that just restarting Home Assistant will not resolve this.
 
 ------
+
+## Objects list
+The 
+following list is [from the deepstack docs](https://python.deepstack.cc/object-detection):
+```
+person,   bicycle,   car,   motorcycle,   airplane,
+bus,   train,   truck,   boat,   traffic light,   fire hydrant,   stop_sign,
+parking meter,   bench,   bird,   cat,   dog,   horse,   sheep,   cow,   elephant,
+bear,   zebra, giraffe,   backpack,   umbrella,   handbag,   tie,   suitcase,
+frisbee,   skis,   snowboard, sports ball,   kite,   baseball bat,   baseball glove,
+skateboard,   surfboard,   tennis racket, bottle,   wine glass,   cup,   fork,
+knife,   spoon,   bowl,   banana,   apple,   sandwich,   orange, broccoli,   carrot,
+hot dog,   pizza,   donot,   cake,   chair,   couch,   potted plant,   bed, dining table,
+toilet,   tv,   laptop,   mouse,   remote,   keyboard,   cell phone,   microwave,
+oven,   toaster,   sink,   refrigerator,   book,   clock,   vase,   scissors,   teddy bear,
+hair dryer, toothbrush.
+```
+
 
 ## Development
 Currently only the helper functions are tested, using pytest.
