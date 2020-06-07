@@ -86,7 +86,9 @@ Configuration variables:
 - **confidence**: (Optional) The confidence (in %) above which detected targets are counted in the sensor state. Default value: 80
 - **name**: (Optional) A custom name for the the entity.
 
-For the ROI, the (x=0,y=0) position is the top left pixel of the image, and the (x=1,y=1) position is the bottom right pixel of the image. It might seem a bit odd to have y running from top to bottom of the image, but that is the coordinate system used by pillow.
+For the ROI, the (x=0,y=0) position is the top left pixel of the image, and the (x=1,y=1) position is the bottom right pixel of the image. It might seem a bit odd to have y running from top to bottom of the image, but that is the coordinate system used by pillow. 
+
+I created an app for exploring the config parameters at [https://github.com/robmarkcole/deepstack-ui](https://github.com/robmarkcole/deepstack-ui)
 
 <p align="center">
 <img src="https://github.com/robmarkcole/HASS-Deepstack-object/blob/master/docs/object_usage.png" width="500">
