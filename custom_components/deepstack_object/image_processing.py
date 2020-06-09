@@ -48,6 +48,7 @@ CONF_TARGETS = "targets"
 CONF_TIMEOUT = "timeout"
 CONF_SAVE_FILE_FOLDER = "save_file_folder"
 CONF_SAVE_TIMESTAMPTED_FILE = "save_timestamped_file"
+CONF_SHOW_BOXES = "show_boxes"
 CONF_ROI_Y_MIN = "roi_y_min"
 CONF_ROI_X_MIN = "roi_x_min"
 CONF_ROI_Y_MAX = "roi_y_max"
@@ -94,6 +95,7 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
         vol.Optional(CONF_ROI_X_MAX, default=DEFAULT_ROI_X_MAX): cv.small_float,
         vol.Optional(CONF_SAVE_FILE_FOLDER): cv.isdir,
         vol.Optional(CONF_SAVE_TIMESTAMPTED_FILE, default=False): cv.boolean,
+        vol.Optional(CONF_SHOW_BOXES, default=True): cv.boolean,
     }
 )
 
@@ -174,6 +176,7 @@ def setup_platform(hass, config, add_devices, discovery_info=None):
             config[CONF_ROI_X_MIN],
             config[CONF_ROI_Y_MAX],
             config[CONF_ROI_X_MAX],
+            config[CONF_SHOW_BOXES],
             save_file_folder,
             config.get(CONF_SAVE_TIMESTAMPTED_FILE),
             camera.get(CONF_ENTITY_ID),
@@ -198,6 +201,7 @@ class ObjectClassifyEntity(ImageProcessingEntity):
         roi_x_min,
         roi_y_max,
         roi_x_max,
+        show_boxes,
         save_file_folder,
         save_timestamped_file,
         camera_entity,
@@ -227,6 +231,7 @@ class ObjectClassifyEntity(ImageProcessingEntity):
             "x_max": roi_x_max,
         }
 
+        self._show_boxes = show_boxes
         self._last_detection = None
         self._image_width = None
         self._image_height = None
@@ -327,12 +332,14 @@ class ObjectClassifyEntity(ImageProcessingEntity):
         draw = ImageDraw.Draw(img)
 
         roi_tuple = tuple(self._roi_dict.values())
-        if roi_tuple != DEFAULT_ROI:
+        if roi_tuple != DEFAULT_ROI and self._show_boxes:
             draw_box(
                 draw, roi_tuple, img.width, img.height, text="ROI", color=GREEN,
             )
 
         for obj in self._objects:
+            if not self._show_boxes:
+                break
             if not obj["name"] in self._targets:
                 continue
             name = obj["name"]
