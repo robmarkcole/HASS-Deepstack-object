@@ -165,8 +165,8 @@ I am using an automation to send a photo notification when there is a new detect
 ## Face recognition
 For face recognition with Deepstack use https://github.com/robmarkcole/HASS-Deepstack-face
 
-## Google Coral USB stick
-If you have a [Google Coral USB stick](https://coral.withgoogle.com/products/accelerator/) you can use it as a drop in replacement for Deepstack object detection by using the [coral-pi-rest-server](https://github.com/robmarkcole/coral-pi-rest-server). Note that the predictions may differ from those provided by Deepstack.
+## Tensorflow lite alternative to deepstack
+As an experiment I created a drop in replacement for deepstack that uses tensorflow-lite models at https://github.com/robmarkcole/tensorflow-lite-rest-server. Note that the predictions differ from those provided by Deepstack, and are less accurate. However it runs on a raspberry pi without requiring hardware acceleration.
 
 ### Support
 For code related issues such as suspected bugs, please open an issue on this repo. For general chat or to discuss Home Assistant specific issues related to configuration or use cases, please [use this thread on the Home Assistant forums](https://community.home-assistant.io/t/face-and-person-detection-with-deepstack-local-and-free/92041).
