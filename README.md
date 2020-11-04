@@ -85,9 +85,8 @@ Configuration variables:
 - **source**: Must be a camera.
 - **targets**: The list of target objects, default `person`.
 - **confidence**: (Optional) The confidence (in %) above which detected targets are counted in the sensor state. Default value: 80
-- **name**: (Optional) A custom name for the the entity.
 
-For the ROI, the (x=0,y=0) position is the top left pixel of the image, and the (x=1,y=1) position is the bottom right pixel of the image. It might seem a bit odd to have y running from top to bottom of the image, but that is the coordinate system used by pillow. 
+For the ROI, the (x=0,y=0) position is the top left pixel of the image, and the (x=1,y=1) position is the bottom right pixel of the image. It might seem a bit odd to have y running from top to bottom of the image, but that is the coordinate system used by pillow.
 
 I created an app for exploring the config parameters at [https://github.com/robmarkcole/deepstack-ui](https://github.com/robmarkcole/deepstack-ui)
 
@@ -105,7 +104,7 @@ An event `deepstack.object_detected` is fired for each object detected above the
 An example use case for event is to get an alert when some rarely appearing object is detected, or to increment a [counter](https://www.home-assistant.io/components/counter/). The `deepstack.object_detected` event payload includes:
 
 - `entity_id` : the entity id responsible for the event
-- `name` : the object detected
+- `name` : the name of the type of object detected
 - `confidence` : the confidence in detection in the range 0 - 1 where 1 is 100% confidence.
 - `box` : the bounding box of the object
 - `centroid` : the centre point of the object
@@ -125,7 +124,7 @@ An example automation using the `deepstack.object_detected` event is given below
   - platform: event
     event_type: deepstack.object_detected
     event_data:
-      object: person
+      name: person
 ```
 
 The `box` coordinates and the box center (`centroid`) can be used to determine whether an object falls within a defined region-of-interest (ROI). This can be useful to include/exclude objects by their location in the image.
