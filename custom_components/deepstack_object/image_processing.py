@@ -53,6 +53,7 @@ CONF_ROI_Y_MIN = "roi_y_min"
 CONF_ROI_X_MIN = "roi_x_min"
 CONF_ROI_Y_MAX = "roi_y_max"
 CONF_ROI_X_MAX = "roi_x_max"
+CONF_CUSTOM_MODEL = "custom_model"
 
 DATETIME_FORMAT = "%Y-%m-%d_%H-%M-%S"
 DEFAULT_API_KEY = ""
@@ -86,6 +87,7 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
         vol.Required(CONF_PORT): cv.port,
         vol.Optional(CONF_API_KEY, default=DEFAULT_API_KEY): cv.string,
         vol.Optional(CONF_TIMEOUT, default=DEFAULT_TIMEOUT): cv.positive_int,
+        vol.Optional(CONF_CUSTOM_MODEL, default=""): cv.string,
         vol.Optional(CONF_TARGETS, default=DEFAULT_TARGETS): vol.All(
             cv.ensure_list, [cv.string]
         ),
@@ -170,6 +172,7 @@ def setup_platform(hass, config, add_devices, discovery_info=None):
             config.get(CONF_PORT),
             config.get(CONF_API_KEY),
             config.get(CONF_TIMEOUT),
+            config.get(CONF_CUSTOM_MODEL),
             targets,
             config.get(ATTR_CONFIDENCE),
             config[CONF_ROI_Y_MIN],
@@ -195,6 +198,7 @@ class ObjectClassifyEntity(ImageProcessingEntity):
         port,
         api_key,
         timeout,
+        custom_model,
         targets,
         confidence,
         roi_y_min,
@@ -209,7 +213,10 @@ class ObjectClassifyEntity(ImageProcessingEntity):
     ):
         """Init with the API key and model id."""
         super().__init__()
-        self._dsobject = ds.DeepstackObject(ip_address, port, api_key, timeout)
+        self._dsobject = ds.DeepstackObject(
+            ip_address, port, api_key, timeout, custom_model
+        )
+        self._custom_model = custom_model
         self._targets = targets
         self._confidence = confidence
         self._camera = camera_entity
@@ -317,6 +324,9 @@ class ObjectClassifyEntity(ImageProcessingEntity):
             )
         if self._last_detection:
             attr["last_target_detection"] = self._last_detection
+        if self._custom_model:
+            attr["custom_model"] = self._custom_model
+        attr["targets"] = self._targets
         attr["summary"] = self._summary
         attr["objects"] = self._objects
         return attr
