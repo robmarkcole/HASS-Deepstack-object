@@ -249,12 +249,11 @@ class ObjectClassifyEntity(ImageProcessingEntity):
         self._summary = {}
 
         try:
-            self._dsobject.detect(image)
+            predictions = self._dsobject.detect(image)
         except ds.DeepstackException as exc:
             _LOGGER.error("Deepstack error : %s", exc)
             return
 
-        predictions = self._dsobject.predictions.copy()
         self._summary = ds.get_objects_summary(predictions)
         self._objects = get_objects(predictions, self._image_width, self._image_height)
         self._targets_found = [
