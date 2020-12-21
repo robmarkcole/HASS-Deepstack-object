@@ -302,11 +302,6 @@ class ObjectClassifyEntity(ImageProcessingEntity):
         return self._name
 
     @property
-    def unit_of_measurement(self):
-        """Return the unit of measurement."""
-        return "targets"
-
-    @property
     def should_poll(self):
         """Return the polling state."""
         return False
@@ -328,7 +323,6 @@ class ObjectClassifyEntity(ImageProcessingEntity):
             attr["custom_model"] = self._custom_model
         attr["targets"] = self._targets
         attr["summary"] = self._summary
-        attr["objects"] = self._objects
         return attr
 
     def save_image(self, image, targets, confidence, directory):
