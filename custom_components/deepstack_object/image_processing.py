@@ -168,22 +168,22 @@ def setup_platform(hass, config, add_devices, discovery_info=None):
     entities = []
     for camera in config[CONF_SOURCE]:
         object_entity = ObjectClassifyEntity(
-            config.get(CONF_IP_ADDRESS),
-            config.get(CONF_PORT),
-            config.get(CONF_API_KEY),
-            config.get(CONF_TIMEOUT),
-            config.get(CONF_CUSTOM_MODEL),
-            targets,
-            config.get(ATTR_CONFIDENCE),
-            config[CONF_ROI_Y_MIN],
-            config[CONF_ROI_X_MIN],
-            config[CONF_ROI_Y_MAX],
-            config[CONF_ROI_X_MAX],
-            config[CONF_SHOW_BOXES],
-            save_file_folder,
-            config.get(CONF_SAVE_TIMESTAMPTED_FILE),
-            camera.get(CONF_ENTITY_ID),
-            camera.get(CONF_NAME),
+            ip_address=config.get(CONF_IP_ADDRESS),
+            port=config.get(CONF_PORT),
+            api_key=config.get(CONF_API_KEY),
+            timeout=config.get(CONF_TIMEOUT),
+            custom_model=config.get(CONF_CUSTOM_MODEL),
+            targets=targets,
+            confidence=config.get(ATTR_CONFIDENCE),
+            roi_y_min=config[CONF_ROI_Y_MIN],
+            roi_x_min=config[CONF_ROI_X_MIN],
+            roi_y_max=config[CONF_ROI_Y_MAX],
+            roi_x_max=config[CONF_ROI_X_MAX],
+            show_boxes=config[CONF_SHOW_BOXES],
+            save_file_folder=save_file_folder,
+            save_timestamped_file=config.get(CONF_SAVE_TIMESTAMPTED_FILE),
+            camera_entity=camera.get(CONF_ENTITY_ID),
+            name=camera.get(CONF_NAME),
         )
         entities.append(object_entity)
     add_devices(entities)
@@ -214,7 +214,12 @@ class ObjectClassifyEntity(ImageProcessingEntity):
         """Init with the API key and model id."""
         super().__init__()
         self._dsobject = ds.DeepstackObject(
-            ip_address, port, api_key, timeout, custom_model
+            ip=ip_address,
+            port=port,
+            api_key=api_key,
+            timeout=timeout,
+            min_confidence=confidence / 100,
+            custom_model=custom_model,
         )
         self._custom_model = custom_model
         self._targets = targets
