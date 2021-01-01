@@ -115,6 +115,22 @@ The `box` coordinates and the box center (`centroid`) can be used to determine w
 * The `box` is defined by the tuple `(y_min, x_min, y_max, x_max)` (equivalent to image top, left, bottom, right) where the coordinates are floats in the range `[0.0, 1.0]` and relative to the width and height of the image.
 * The centroid is in `(x,y)` coordinates where `(0,0)` is the top left hand corner of the image and `(1,1)` is the bottom right corner of the image.
 
+## Browsing saved images in HA
+I highly recommend using the Home Assistant Media Player Browser to browse and preview processed images. Add to your config something like:
+```yaml
+homeassistant:
+.
+.
+  whitelist_external_dirs:
+    - /config/images/
+  media_dirs:
+    local: /config/images/
+
+media_source:
+```
+And configure Deepstack to use the above directory for `save_file_folder`, then saved images can be browsed from the HA front end like below:
+
+
 ## Face recognition
 For face recognition with Deepstack use https://github.com/robmarkcole/HASS-Deepstack-face
 
