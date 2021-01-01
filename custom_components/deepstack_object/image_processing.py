@@ -284,7 +284,7 @@ class ObjectClassifyEntity(ImageProcessingEntity):
 
         if self._save_file_folder and self._state > 0:
             saved_image_path = self.save_image(
-                image, self._targets, self._confidence, self._save_file_folder,
+                image, self._targets_found, self._save_file_folder,
             )
 
         # Fire events
@@ -338,7 +338,7 @@ class ObjectClassifyEntity(ImageProcessingEntity):
             attr[CONF_SAVE_TIMESTAMPTED_FILE] = self._save_timestamped_file
         return attr
 
-    def save_image(self, image, targets, confidence, directory) -> str:
+    def save_image(self, image, targets, directory) -> str:
         """Draws the actual bounding box of the detected objects.
 
         Returns: saved_image_path, which is the path to the saved timestamped file if configured, else the default saved image.
@@ -356,11 +356,9 @@ class ObjectClassifyEntity(ImageProcessingEntity):
                 draw, roi_tuple, img.width, img.height, text="ROI", color=GREEN,
             )
 
-        for obj in self._objects:
+        for obj in targets:
             if not self._show_boxes:
                 break
-            if not obj["name"] in self._targets:
-                continue
             name = obj["name"]
             confidence = obj["confidence"]
             box = obj["bounding_box"]
