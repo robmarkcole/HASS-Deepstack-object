@@ -86,24 +86,19 @@ An example automation using the `deepstack.object_detected` event is given below
 
 ```yaml
 - action:
-  - data_template:
-      title: "New object detection"
-      message: "{{ trigger.event.data.name }} with confidence {{ trigger.event.data.confidence }}"
-    service: notify.pushbullet
+    - data_template:
+        caption: "New person detection with confidence {{ trigger.event.data.confidence }}"
+        file: "{{ trigger.event.data.saved_file  }}"
+      service: telegram_bot.send_photo
   alias: Object detection automation
   condition: []
-  id: '1120092824622'
+  id: "1120092824622"
   trigger:
-  - platform: event
-    event_type: deepstack.object_detected
-    event_data:
-      name: person
+    - platform: event
+      event_type: deepstack.object_detected
+      event_data:
+        name: person
 ```
-
-The `box` coordinates and the box center (`centroid`) can be used to determine whether an object falls within a defined region-of-interest (ROI). This can be useful to include/exclude objects by their location in the image.
-
-* The `box` is defined by the tuple `(y_min, x_min, y_max, x_max)` (equivalent to image top, left, bottom, right) where the coordinates are floats in the range `[0.0, 1.0]` and relative to the width and height of the image.
-* The centroid is in `(x,y)` coordinates where `(0,0)` is the top left hand corner of the image and `(1,1)` is the bottom right corner of the image.
 
 ## Displaying the deepstack latest jpg file
 It easy to display the `deepstack_object_{source name}_latest.jpg` image with a [local_file](https://www.home-assistant.io/components/local_file/) camera. An example configuration is:
@@ -114,24 +109,11 @@ camera:
     name: deepstack_latest_person
 ```
 
-## Automation using deepstack latest jpg file
-I am using an automation to send a photo notification when there is a new detection. This requires you to setup the [folder_watcher](https://www.home-assistant.io/integrations/folder_watcher/) integration first. Then in `automations.yaml` I have:
+## Info on box
+The `box` coordinates and the box center (`centroid`) can be used to determine whether an object falls within a defined region-of-interest (ROI). This can be useful to include/exclude objects by their location in the image.
 
-```yaml
-- id: '3287784389530'
-  alias: Deepstack person alert
-  trigger:
-    event_type: folder_watcher
-    platform: event
-    event_data:
-      event_type: modified
-      path: '/config/www/deepstack_object_local_file_latest.jpg'
-  action:
-    service: telegram_bot.send_photo
-    data_template:
-      caption: Person detected
-      file: '/config/www/deepstack_object_local_file_latest.jpg'
-```
+* The `box` is defined by the tuple `(y_min, x_min, y_max, x_max)` (equivalent to image top, left, bottom, right) where the coordinates are floats in the range `[0.0, 1.0]` and relative to the width and height of the image.
+* The centroid is in `(x,y)` coordinates where `(0,0)` is the top left hand corner of the image and `(1,1)` is the bottom right corner of the image.
 
 ## Face recognition
 For face recognition with Deepstack use https://github.com/robmarkcole/HASS-Deepstack-face
