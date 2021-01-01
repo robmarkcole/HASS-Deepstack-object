@@ -77,7 +77,7 @@ An example use case for event is to get an alert when some rarely appearing obje
 
 - `entity_id` : the entity id responsible for the event
 - `name` : the name of the type of object detected
-- `confidence` : the confidence in detection in the range 0 - 1 where 1 is 100% confidence.
+- `confidence` : the confidence in detection in the range 0 - 100%
 - `box` : the bounding box of the object
 - `centroid` : the centre point of the object
 - `saved_file` : the path to the saved annotated image, which is the timestamped file if `save_timestamped_file` is True, or the default saved image if False
