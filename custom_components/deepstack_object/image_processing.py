@@ -333,7 +333,7 @@ class ObjectClassifyEntity(ImageProcessingEntity):
         attr["targets"] = self._targets
         attr["summary"] = self._summary
         if self._save_file_folder:
-            attr[CONF_SAVE_FILE_FOLDER] = self._save_file_folder
+            attr[CONF_SAVE_FILE_FOLDER] = str(self._save_file_folder)
         if self._save_timestamped_file:
             attr[CONF_SAVE_TIMESTAMPTED_FILE] = self._save_timestamped_file
         return attr
