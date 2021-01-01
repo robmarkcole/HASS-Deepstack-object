@@ -130,6 +130,9 @@ media_source:
 ```
 And configure Deepstack to use the above directory for `save_file_folder`, then saved images can be browsed from the HA front end like below:
 
+<p align="center">
+<img src="https://github.com/robmarkcole/HASS-Deepstack-object/blob/master/docs/media_player.png" width="750">
+</p>
 
 ## Face recognition
 For face recognition with Deepstack use https://github.com/robmarkcole/HASS-Deepstack-face
