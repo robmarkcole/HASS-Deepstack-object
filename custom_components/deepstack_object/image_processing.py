@@ -43,6 +43,24 @@ from homeassistant.core import split_entity_id
 
 _LOGGER = logging.getLogger(__name__)
 
+ANIMAL = "animal"
+ANIMALS = [
+    "bird",
+    "cat",
+    "dog",
+    "horse",
+    "sheep",
+    "cow",
+    "elephant",
+    "bear",
+    "zebra",
+    "giraffe",
+]
+OTHER = "other"
+PERSON = "person"
+VEHICLE = "vehicle"
+VEHICLES = ["bicycle", "car", "motorcycle", "airplane", "bus", "train", "truck"]
+
 CONF_API_KEY = "api_key"
 CONF_TARGETS = "targets"
 CONF_TIMEOUT = "timeout"
@@ -57,7 +75,7 @@ CONF_CUSTOM_MODEL = "custom_model"
 
 DATETIME_FORMAT = "%Y-%m-%d_%H-%M-%S"
 DEFAULT_API_KEY = ""
-DEFAULT_TARGETS = ["person"]
+DEFAULT_TARGETS = [PERSON]
 DEFAULT_TIMEOUT = 10
 DEFAULT_ROI_Y_MIN = 0.0
 DEFAULT_ROI_Y_MAX = 1.0
@@ -124,6 +142,17 @@ def get_valid_filename(name: str) -> str:
     return re.sub(r"(?u)[^-\w.]", "", str(name).strip().replace(" ", "_"))
 
 
+def get_object_type(object_name: str) -> str:
+    if object_name == PERSON:
+        return PERSON
+    elif object_name in ANIMALS:
+        return ANIMAL
+    elif object_name in VEHICLES:
+        return VEHICLE
+    else:
+        return OTHER
+
+
 def get_objects(predictions: list, img_width: int, img_height: int) -> List[Dict]:
     """Return objects with formatting and extra info."""
     objects = []
@@ -145,6 +174,7 @@ def get_objects(predictions: list, img_width: int, img_height: int) -> List[Dict
             "y": round(box["y_min"] + (box["height"] / 2), decimal_places),
         }
         name = pred["label"]
+        object_type = get_object_type(name)
         confidence = round(pred["confidence"] * 100, decimal_places)
 
         objects.append(
@@ -153,6 +183,7 @@ def get_objects(predictions: list, img_width: int, img_height: int) -> List[Dict
                 "box_area": box_area,
                 "centroid": centroid,
                 "name": name,
+                "object_type": object_type,
                 "confidence": confidence,
             }
         )
@@ -365,25 +396,20 @@ class ObjectClassifyEntity(ImageProcessingEntity):
             centroid = obj["centroid"]
             box_label = f"{name}: {confidence:.1f}%"
 
-            if object_in_roi(self._roi_dict, centroid):
-                box_colour = RED
-            else:
-                box_colour = YELLOW
-
             draw_box(
                 draw,
                 (box["y_min"], box["x_min"], box["y_max"], box["x_max"]),
                 img.width,
                 img.height,
                 text=box_label,
-                color=box_colour,
+                color=RED,
             )
 
             # draw bullseye
             draw.text(
                 (centroid["x"] * img.width, centroid["y"] * img.height),
                 text="X",
-                fill=box_colour,
+                fill=RED,
             )
 
         # Save images, returning the path of saved image as str
