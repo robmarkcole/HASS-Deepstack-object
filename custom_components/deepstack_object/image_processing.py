@@ -322,17 +322,13 @@ class ObjectClassifyEntity(ImageProcessingEntity):
             if obj["name"] or obj["object_type"] in self._targets_names:
                 ## Then check if the type has a configured confidence, if yes assign
                 ## Then if a confidence for a named object, this takes precedence over type confidence
-                configured_confidences = []
+                confidence = self._confidence
                 for target in self._targets:
                     if target[CONF_TARGET] == obj["object_type"]:
-                        configured_confidences.append(target[CONF_CONFIDENCE])
+                        confidence = target[CONF_CONFIDENCE]
                 for target in self._targets:
                     if target[CONF_TARGET] == obj["name"]:
-                        configured_confidences.append(target[CONF_CONFIDENCE])
-                if not configured_confidences:
-                    confidence = self._confidence
-                else:
-                    confidence = min(configured_confidences)
+                        confidence = target[CONF_CONFIDENCE]
                 if obj["confidence"] > confidence:
                     if object_in_roi(self._roi_dict, obj["centroid"]):
                         self._targets_found.append(obj)

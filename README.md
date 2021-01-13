@@ -27,6 +27,7 @@ image_processing:
     port: 80
     api_key: mysecretkey
     # custom_model: mask
+    # confidence: 80
     save_file_folder: /config/snapshots/
     save_timestamped_file: True
     # roi_x_min: 0.35
@@ -34,9 +35,11 @@ image_processing:
     #roi_y_min: 0.4
     roi_y_max: 0.8
     targets:
-      - person
-      - vehicle
-      - dog
+      - target: person
+      - target: vehicle
+        confidence: 60
+      - target: car
+        confidence: 40
     source:
       - entity_id: camera.local_file
 ```
@@ -47,6 +50,7 @@ Configuration variables:
 - **api_key**: (Optional) Any API key you have set.
 - **timeout**: (Optional, default 10 seconds) The timeout for requests to deepstack.
 - **custom_model**: (Optional) The name of a custom model if you are using one. Don't forget to add the targets from the custom model below
+- **confidence**: (Optional) The confidence (in %) above which detected targets are counted in the sensor state. Default value: 80
 - **save_file_folder**: (Optional) The folder to save processed images to. Note that folder path should be added to [whitelist_external_dirs](https://www.home-assistant.io/docs/configuration/basic/)
 - **save_timestamped_file**: (Optional, default `False`, requires `save_file_folder` to be configured) Save the processed image with the time of detection in the filename.
 - **show_boxes**: (optional, default `True`), if `False` bounding boxes are not shown on saved images
@@ -55,8 +59,7 @@ Configuration variables:
 - **roi_y_min**: (optional, default 0), range 0-1, must be less than roi_y_max
 - **roi_y_max**: (optional, default 1), range 0-1, must be more than roi_y_min
 - **source**: Must be a camera.
-- **targets**: The list of target object names and/or `object_type`, default `person`.
-- **confidence**: (Optional) The confidence (in %) above which detected targets are counted in the sensor state. Default value: 80
+- **targets**: The list of target object names and/or `object_type`, default `person`. Optionally a `confidence` can be set, if not the default confidence is used.
 
 For the ROI, the (x=0,y=0) position is the top left pixel of the image, and the (x=1,y=1) position is the bottom right pixel of the image. It might seem a bit odd to have y running from top to bottom of the image, but that is the coordinate system used by pillow.
 
