@@ -284,7 +284,6 @@ class ObjectClassifyEntity(ImageProcessingEntity):
         self._state = None
         self._objects = []  # The parsed raw data
         self._targets_found = []
-        self._summary = {}
 
         self._roi_dict = {
             "y_min": roi_y_min,
@@ -308,7 +307,6 @@ class ObjectClassifyEntity(ImageProcessingEntity):
         self._state = None
         self._objects = []  # The parsed raw data
         self._targets_found = []
-        self._summary = {}
         saved_image_path = None
 
         try:
@@ -317,7 +315,6 @@ class ObjectClassifyEntity(ImageProcessingEntity):
             _LOGGER.error("Deepstack error : %s", exc)
             return
 
-        self._summary = ds.get_objects_summary(predictions)
         self._objects = get_objects(predictions, self._image_width, self._image_height)
         self._targets_found = []
 
@@ -325,13 +322,17 @@ class ObjectClassifyEntity(ImageProcessingEntity):
             if obj["name"] or obj["object_type"] in self._targets_names:
                 ## Then check if the type has a configured confidence, if yes assign
                 ## Then if a confidence for a named object, this takes precedence over type confidence
-                confidence = None
+                configured_confidences = []
                 for target in self._targets:
                     if target[CONF_TARGET] == obj["object_type"]:
-                        confidence = target[CONF_CONFIDENCE]
+                        configured_confidences.append(target[CONF_CONFIDENCE])
                 for target in self._targets:
                     if target[CONF_TARGET] == obj["name"]:
-                        confidence = target[CONF_CONFIDENCE]
+                        configured_confidences.append(target[CONF_CONFIDENCE])
+                if not configured_confidences:
+                    confidence = self._confidence
+                else:
+                    confidence = min(configured_confidences)
                 if obj["confidence"] > confidence:
                     if object_in_roi(self._roi_dict, obj["centroid"]):
                         self._targets_found.append(obj)
@@ -378,12 +379,16 @@ class ObjectClassifyEntity(ImageProcessingEntity):
         """Return device specific state attributes."""
         attr = {}
         attr["targets"] = self._targets
+        attr["targets_found"] = [
+            {obj["name"]: obj["confidence"]} for obj in self._targets_found
+        ]
         if self._last_detection:
             attr["last_target_detection"] = self._last_detection
         if self._custom_model:
             attr["custom_model"] = self._custom_model
-        attr["summary"] = self._summary
-        attr["objects"] = [{obj["name"]: obj["confidence"]} for obj in self._objects]
+        attr["all_objects"] = [
+            {obj["name"]: obj["confidence"]} for obj in self._objects
+        ]
         if self._save_file_folder:
             attr[CONF_SAVE_FILE_FOLDER] = str(self._save_file_folder)
         if self._save_timestamped_file:
