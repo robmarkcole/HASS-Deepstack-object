@@ -304,7 +304,7 @@ class ObjectClassifyEntity(ImageProcessingEntity):
         self._targets_found = [
             obj
             for obj in self._objects
-            if (obj["name"] in self._targets)
+            if (obj["name"] or obj["object_type"] in self._targets)
             and (obj["confidence"] > self._confidence)
             and (object_in_roi(self._roi_dict, obj["centroid"]))
         ]
