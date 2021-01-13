@@ -35,8 +35,8 @@ image_processing:
     roi_y_max: 0.8
     targets:
       - person
-      - car
-      - mask
+      - vehicle
+      - dog
     source:
       - entity_id: camera.local_file
 ```
@@ -55,7 +55,7 @@ Configuration variables:
 - **roi_y_min**: (optional, default 0), range 0-1, must be less than roi_y_max
 - **roi_y_max**: (optional, default 1), range 0-1, must be more than roi_y_min
 - **source**: Must be a camera.
-- **targets**: The list of target objects, default `person`.
+- **targets**: The list of target object names and/or `object_type`, default `person`.
 - **confidence**: (Optional) The confidence (in %) above which detected targets are counted in the sensor state. Default value: 80
 
 For the ROI, the (x=0,y=0) position is the top left pixel of the image, and the (x=1,y=1) position is the bottom right pixel of the image. It might seem a bit odd to have y running from top to bottom of the image, but that is the coordinate system used by pillow.
@@ -76,7 +76,7 @@ An event `deepstack.object_detected` is fired for each object detected above the
 An example use case for event is to get an alert when some rarely appearing object is detected, or to increment a [counter](https://www.home-assistant.io/components/counter/). The `deepstack.object_detected` event payload includes:
 
 - `entity_id` : the entity id responsible for the event
-- `name` : the name of the type of object detected
+- `name` : the name of the object detected
 - `object_type` : the type of the object, from `person`, `vehicle`, `animal` or `other`
 - `confidence` : the confidence in detection in the range 0 - 100%
 - `box` : the bounding box of the object
@@ -172,7 +172,7 @@ A6: This can happen when you are running in Docker/Hassio, and indicates that on
 ------
 
 ## Objects
-The following lists all target objects:
+The following lists all valid target object names:
 ```
 person,   bicycle,   car,   motorcycle,   airplane,
 bus,   train,   truck,   boat,   traffic light,   fire hydrant,   stop_sign,
