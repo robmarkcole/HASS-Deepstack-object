@@ -59,7 +59,7 @@ Configuration variables:
 - **roi_y_min**: (optional, default 0), range 0-1, must be less than roi_y_max
 - **roi_y_max**: (optional, default 1), range 0-1, must be more than roi_y_min
 - **source**: Must be a camera.
-- **targets**: The list of target object names and/or `object_type`, default `person`. Optionally a `confidence` can be set, if not the default confidence is used.
+- **targets**: The list of target object names and/or `object_type`, default `person`. Optionally a `confidence` can be set for this target, if not the default confidence is used.
 
 For the ROI, the (x=0,y=0) position is the top left pixel of the image, and the (x=1,y=1) position is the bottom right pixel of the image. It might seem a bit odd to have y running from top to bottom of the image, but that is the coordinate system used by pillow.
 
