@@ -61,6 +61,8 @@ OTHER = "other"
 PERSON = "person"
 VEHICLE = "vehicle"
 VEHICLES = ["bicycle", "car", "motorcycle", "airplane", "bus", "train", "truck"]
+OBJECT_TYPES = [ANIMAL, OTHER, PERSON, VEHICLE]
+
 
 CONF_API_KEY = "api_key"
 CONF_TARGET = "target"
@@ -264,6 +266,7 @@ class ObjectClassifyEntity(ImageProcessingEntity):
         )
         self._custom_model = custom_model
         self._targets = targets
+        self._targets_names = [target[CONF_TARGET] for target in targets]
         self._confidence = confidence
         self._camera = camera_entity
         if name:
@@ -310,13 +313,13 @@ class ObjectClassifyEntity(ImageProcessingEntity):
 
         self._summary = ds.get_objects_summary(predictions)
         self._objects = get_objects(predictions, self._image_width, self._image_height)
-        self._targets_found = [
-            obj
-            for obj in self._objects
-            if (obj["name"] or obj["object_type"] in self._targets)
-            and (obj["confidence"] > self._confidence)
-            and (object_in_roi(self._roi_dict, obj["centroid"]))
-        ]
+        self._targets_found = []
+
+        for obj in self._objects:
+            if obj["name"] or obj["object_type"] in self._targets_names:
+                if obj["confidence"] > self._confidence:
+                    if object_in_roi(self._roi_dict, obj["centroid"]):
+                        self._targets_found.append(obj)
 
         self._state = len(self._targets_found)
         if self._state > 0:
@@ -360,13 +363,6 @@ class ObjectClassifyEntity(ImageProcessingEntity):
         """Return device specific state attributes."""
         attr = {}
         attr["targets"] = self._targets
-        for target in self._targets:
-            attr[f"ROI {target} count"] = len(
-                [t for t in self._targets_found if t["name"] == target]
-            )
-            attr[f"ALL {target} count"] = len(
-                [t for t in self._objects if t["name"] == target]
-            )
         if self._last_detection:
             attr["last_target_detection"] = self._last_detection
         if self._custom_model:
