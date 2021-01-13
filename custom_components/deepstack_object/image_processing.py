@@ -23,9 +23,11 @@ import voluptuous as vol
 from homeassistant.util.pil import draw_box
 from homeassistant.components.image_processing import (
     ATTR_CONFIDENCE,
+    CONF_CONFIDENCE,
     CONF_ENTITY_ID,
     CONF_NAME,
     CONF_SOURCE,
+    DEFAULT_CONFIDENCE,
     DOMAIN,
     PLATFORM_SCHEMA,
     ImageProcessingEntity,
@@ -60,8 +62,11 @@ OTHER = "other"
 PERSON = "person"
 VEHICLE = "vehicle"
 VEHICLES = ["bicycle", "car", "motorcycle", "airplane", "bus", "train", "truck"]
+OBJECT_TYPES = [ANIMAL, OTHER, PERSON, VEHICLE]
+
 
 CONF_API_KEY = "api_key"
+CONF_TARGET = "target"
 CONF_TARGETS = "targets"
 CONF_TIMEOUT = "timeout"
 CONF_SAVE_FILE_FOLDER = "save_file_folder"
@@ -75,7 +80,7 @@ CONF_CUSTOM_MODEL = "custom_model"
 
 DATETIME_FORMAT = "%Y-%m-%d_%H-%M-%S"
 DEFAULT_API_KEY = ""
-DEFAULT_TARGETS = [PERSON]
+DEFAULT_TARGETS = [{CONF_TARGET: PERSON}]
 DEFAULT_TIMEOUT = 10
 DEFAULT_ROI_Y_MIN = 0.0
 DEFAULT_ROI_Y_MAX = 1.0
@@ -93,11 +98,19 @@ BOX = "box"
 FILE = "file"
 OBJECT = "object"
 SAVED_FILE = "saved_file"
+MIN_CONFIDENCE = 0.1
 
 # rgb(red, green, blue)
 RED = (255, 0, 0)  # For objects within the ROI
 GREEN = (0, 255, 0)  # For ROI box
-YELLOW = (255, 255, 0)  # For objects outside the ROI
+YELLOW = (255, 255, 0)  # Unused
+
+TARGETS_SCHEMA = {
+    vol.Required(CONF_TARGET): cv.string,
+    vol.Optional(CONF_CONFIDENCE): vol.All(
+        vol.Coerce(float), vol.Range(min=10, max=100)
+    ),
+}
 
 
 PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
@@ -108,7 +121,7 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
         vol.Optional(CONF_TIMEOUT, default=DEFAULT_TIMEOUT): cv.positive_int,
         vol.Optional(CONF_CUSTOM_MODEL, default=""): cv.string,
         vol.Optional(CONF_TARGETS, default=DEFAULT_TARGETS): vol.All(
-            cv.ensure_list, [cv.string]
+            cv.ensure_list, [vol.Schema(TARGETS_SCHEMA)]
         ),
         vol.Optional(CONF_ROI_Y_MIN, default=DEFAULT_ROI_Y_MIN): cv.small_float,
         vol.Optional(CONF_ROI_X_MIN, default=DEFAULT_ROI_X_MIN): cv.small_float,
@@ -196,7 +209,6 @@ def setup_platform(hass, config, add_devices, discovery_info=None):
     if save_file_folder:
         save_file_folder = Path(save_file_folder)
 
-    targets = [t.lower() for t in config[CONF_TARGETS]]  # ensure lower case
     entities = []
     for camera in config[CONF_SOURCE]:
         object_entity = ObjectClassifyEntity(
@@ -205,8 +217,8 @@ def setup_platform(hass, config, add_devices, discovery_info=None):
             api_key=config.get(CONF_API_KEY),
             timeout=config.get(CONF_TIMEOUT),
             custom_model=config.get(CONF_CUSTOM_MODEL),
-            targets=targets,
-            confidence=config.get(ATTR_CONFIDENCE),
+            targets=config.get(CONF_TARGETS),
+            confidence=config.get(CONF_CONFIDENCE),
             roi_y_min=config[CONF_ROI_Y_MIN],
             roi_x_min=config[CONF_ROI_X_MIN],
             roi_y_max=config[CONF_ROI_Y_MAX],
@@ -250,12 +262,18 @@ class ObjectClassifyEntity(ImageProcessingEntity):
             port=port,
             api_key=api_key,
             timeout=timeout,
-            min_confidence=confidence / 100,
+            min_confidence=MIN_CONFIDENCE,
             custom_model=custom_model,
         )
         self._custom_model = custom_model
-        self._targets = targets
         self._confidence = confidence
+        self._targets = targets
+        for target in self._targets:
+            if CONF_CONFIDENCE not in target.keys():
+                target[CONF_CONFIDENCE] = self._confidence
+        self._targets_names = [
+            target[CONF_TARGET] for target in targets
+        ]  # can be a name or a type
         self._camera = camera_entity
         if name:
             self._name = name
@@ -266,7 +284,6 @@ class ObjectClassifyEntity(ImageProcessingEntity):
         self._state = None
         self._objects = []  # The parsed raw data
         self._targets_found = []
-        self._summary = {}
 
         self._roi_dict = {
             "y_min": roi_y_min,
@@ -290,7 +307,6 @@ class ObjectClassifyEntity(ImageProcessingEntity):
         self._state = None
         self._objects = []  # The parsed raw data
         self._targets_found = []
-        self._summary = {}
         saved_image_path = None
 
         try:
@@ -299,15 +315,23 @@ class ObjectClassifyEntity(ImageProcessingEntity):
             _LOGGER.error("Deepstack error : %s", exc)
             return
 
-        self._summary = ds.get_objects_summary(predictions)
         self._objects = get_objects(predictions, self._image_width, self._image_height)
-        self._targets_found = [
-            obj
-            for obj in self._objects
-            if (obj["name"] or obj["object_type"] in self._targets)
-            and (obj["confidence"] > self._confidence)
-            and (object_in_roi(self._roi_dict, obj["centroid"]))
-        ]
+        self._targets_found = []
+
+        for obj in self._objects:
+            if obj["name"] or obj["object_type"] in self._targets_names:
+                ## Then check if the type has a configured confidence, if yes assign
+                ## Then if a confidence for a named object, this takes precedence over type confidence
+                confidence = self._confidence
+                for target in self._targets:
+                    if target[CONF_TARGET] == obj["object_type"]:
+                        confidence = target[CONF_CONFIDENCE]
+                for target in self._targets:
+                    if target[CONF_TARGET] == obj["name"]:
+                        confidence = target[CONF_CONFIDENCE]
+                if obj["confidence"] > confidence:
+                    if object_in_roi(self._roi_dict, obj["centroid"]):
+                        self._targets_found.append(obj)
 
         self._state = len(self._targets_found)
         if self._state > 0:
@@ -350,19 +374,17 @@ class ObjectClassifyEntity(ImageProcessingEntity):
     def device_state_attributes(self) -> Dict:
         """Return device specific state attributes."""
         attr = {}
-        for target in self._targets:
-            attr[f"ROI {target} count"] = len(
-                [t for t in self._targets_found if t["name"] == target]
-            )
-            attr[f"ALL {target} count"] = len(
-                [t for t in self._objects if t["name"] == target]
-            )
+        attr["targets"] = self._targets
+        attr["targets_found"] = [
+            {obj["name"]: obj["confidence"]} for obj in self._targets_found
+        ]
         if self._last_detection:
             attr["last_target_detection"] = self._last_detection
         if self._custom_model:
             attr["custom_model"] = self._custom_model
-        attr["targets"] = self._targets
-        attr["summary"] = self._summary
+        attr["all_objects"] = [
+            {obj["name"]: obj["confidence"]} for obj in self._objects
+        ]
         if self._save_file_folder:
             attr[CONF_SAVE_FILE_FOLDER] = str(self._save_file_folder)
         if self._save_timestamped_file:
