@@ -98,7 +98,7 @@ BOX = "box"
 FILE = "file"
 OBJECT = "object"
 SAVED_FILE = "saved_file"
-MIN_CONFIDENCE = 0.01
+MIN_CONFIDENCE = 0.1
 
 # rgb(red, green, blue)
 RED = (255, 0, 0)  # For objects within the ROI
@@ -108,7 +108,7 @@ YELLOW = (255, 255, 0)  # Unused
 TARGETS_SCHEMA = {
     vol.Required(CONF_TARGET): cv.string,
     vol.Optional(CONF_CONFIDENCE): vol.All(
-        vol.Coerce(float), vol.Range(min=1, max=100)
+        vol.Coerce(float), vol.Range(min=10, max=100)
     ),
 }
 
