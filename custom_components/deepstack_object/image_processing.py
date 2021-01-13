@@ -26,6 +26,7 @@ from homeassistant.components.image_processing import (
     CONF_ENTITY_ID,
     CONF_NAME,
     CONF_SOURCE,
+    DEFAULT_CONFIDENCE,
     DOMAIN,
     PLATFORM_SCHEMA,
     ImageProcessingEntity,
@@ -62,6 +63,7 @@ VEHICLE = "vehicle"
 VEHICLES = ["bicycle", "car", "motorcycle", "airplane", "bus", "train", "truck"]
 
 CONF_API_KEY = "api_key"
+CONF_TARGET = "target"
 CONF_TARGETS = "targets"
 CONF_TIMEOUT = "timeout"
 CONF_SAVE_FILE_FOLDER = "save_file_folder"
@@ -75,7 +77,7 @@ CONF_CUSTOM_MODEL = "custom_model"
 
 DATETIME_FORMAT = "%Y-%m-%d_%H-%M-%S"
 DEFAULT_API_KEY = ""
-DEFAULT_TARGETS = [PERSON]
+DEFAULT_TARGETS = [{CONF_TARGET: PERSON, ATTR_CONFIDENCE: DEFAULT_CONFIDENCE}]
 DEFAULT_TIMEOUT = 10
 DEFAULT_ROI_Y_MIN = 0.0
 DEFAULT_ROI_Y_MAX = 1.0
@@ -97,7 +99,14 @@ SAVED_FILE = "saved_file"
 # rgb(red, green, blue)
 RED = (255, 0, 0)  # For objects within the ROI
 GREEN = (0, 255, 0)  # For ROI box
-YELLOW = (255, 255, 0)  # For objects outside the ROI
+YELLOW = (255, 255, 0)  # Unused
+
+TARGETS_SCHEMA = {
+    vol.Required(CONF_TARGET): cv.string,
+    vol.Optional(ATTR_CONFIDENCE, default=DEFAULT_CONFIDENCE): vol.All(
+        vol.Coerce(float), vol.Range(min=0, max=100)
+    ),
+}
 
 
 PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
@@ -108,7 +117,7 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
         vol.Optional(CONF_TIMEOUT, default=DEFAULT_TIMEOUT): cv.positive_int,
         vol.Optional(CONF_CUSTOM_MODEL, default=""): cv.string,
         vol.Optional(CONF_TARGETS, default=DEFAULT_TARGETS): vol.All(
-            cv.ensure_list, [cv.string]
+            cv.ensure_list, [vol.Schema(TARGETS_SCHEMA)]
         ),
         vol.Optional(CONF_ROI_Y_MIN, default=DEFAULT_ROI_Y_MIN): cv.small_float,
         vol.Optional(CONF_ROI_X_MIN, default=DEFAULT_ROI_X_MIN): cv.small_float,
@@ -196,7 +205,7 @@ def setup_platform(hass, config, add_devices, discovery_info=None):
     if save_file_folder:
         save_file_folder = Path(save_file_folder)
 
-    targets = [t.lower() for t in config[CONF_TARGETS]]  # ensure lower case
+    targets = config[CONF_TARGETS]  # ensure lower case
     entities = []
     for camera in config[CONF_SOURCE]:
         object_entity = ObjectClassifyEntity(
@@ -350,6 +359,7 @@ class ObjectClassifyEntity(ImageProcessingEntity):
     def device_state_attributes(self) -> Dict:
         """Return device specific state attributes."""
         attr = {}
+        attr["targets"] = self._targets
         for target in self._targets:
             attr[f"ROI {target} count"] = len(
                 [t for t in self._targets_found if t["name"] == target]
@@ -361,7 +371,6 @@ class ObjectClassifyEntity(ImageProcessingEntity):
             attr["last_target_detection"] = self._last_detection
         if self._custom_model:
             attr["custom_model"] = self._custom_model
-        attr["targets"] = self._targets
         attr["summary"] = self._summary
         if self._save_file_folder:
             attr[CONF_SAVE_FILE_FOLDER] = str(self._save_file_folder)
