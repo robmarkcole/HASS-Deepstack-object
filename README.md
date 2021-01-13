@@ -7,9 +7,9 @@ docker run -e VISION-DETECTION=True -e API-KEY="mysecretkey" -v localstorage:/da
 ```
 
 ## Usage of this component
-The `deepstack_object` component adds an `image_processing` entity where the state of the entity is the total count of target objects that are above a `confidence` threshold which has a default value of 80%. You can have a single target object class, or multiple. The time of the last detection of any target object is in the `last target detection` attribute. The type and number of objects (of any confidence) is listed in the `summary` attributes. Optionally a region of interest (ROI) can be configured, and only objects with their center (represented by a `x`) within the ROI will be included in the state count. The ROI will be displayed as a green box, and objects with their center in the ROI have a red box, whilst objects with their center outside the ROI have a yellow box.
+The `deepstack_object` component adds an `image_processing` entity where the state of the entity is the total count of target objects that are above a `confidence` threshold which has a default value of 80%. You can have a single target object class, or multiple. The time of the last detection of any target object is in the `last target detection` attribute. The type and number of objects (of any confidence) is listed in the `summary` attributes. Optionally a region of interest (ROI) can be configured, and only objects with their center (represented by a `x`) within the ROI will be included in the state count. The ROI will be displayed as a green box, and objects with their center in the ROI have a red box.
 
-Also optionally the processed image can be saved to disk, with bounding boxes showing the location of detected objects. If `save_file_folder` is configured, an image with filename of format `deepstack_object_{source name}_latest.jpg` is over-written on each new detection of a target. Optionally this image can also be saved with a timestamp in the filename, if `save_timestamped_file` is configured as `True`. An event `deepstack.object_detected` is fired for each object detected. If you are a power user with advanced needs such as zoning detections or you want to track multiple object types, you will need to use the `deepstack.object_detected` events.
+Also optionally the processed image can be saved to disk, with bounding boxes showing the location of detected objects. If `save_file_folder` is configured, an image with filename of format `deepstack_object_{source name}_latest.jpg` is over-written on each new detection of a target. Optionally this image can also be saved with a timestamp in the filename, if `save_timestamped_file` is configured as `True`. An event `deepstack.object_detected` is fired for each object detected that is in the targets list, and meets the confidence and ROI criteria. If you are a power user with advanced needs such as zoning detections or you want to track multiple object types, you will need to use the `deepstack.object_detected` events.
 
 **Note** that by default the component will **not** automatically scan images, but requires you to call the `image_processing.scan` service e.g. using an automation triggered by motion.
 
@@ -77,6 +77,7 @@ An example use case for event is to get an alert when some rarely appearing obje
 
 - `entity_id` : the entity id responsible for the event
 - `name` : the name of the type of object detected
+- `object_type` : the type of the object, from `person`, `vehicle`, `animal` or `other`
 - `confidence` : the confidence in detection in the range 0 - 100%
 - `box` : the bounding box of the object
 - `centroid` : the centre point of the object
@@ -170,8 +171,8 @@ A6: This can happen when you are running in Docker/Hassio, and indicates that on
 
 ------
 
-## Objects list
-The following list is [from the deepstack docs](https://python.deepstack.cc/object-detection):
+## Objects
+The following lists all target objects:
 ```
 person,   bicycle,   car,   motorcycle,   airplane,
 bus,   train,   truck,   boat,   traffic light,   fire hydrant,   stop_sign,
@@ -185,7 +186,11 @@ toilet,   tv,   laptop,   mouse,   remote,   keyboard,   cell phone,   microwave
 oven,   toaster,   sink,   refrigerator,   book,   clock,   vase,   scissors,   teddy bear,
 hair dryer, toothbrush.
 ```
-
+Objects are grouped by the following `object_type`:
+- **person**: person
+- **animal**: bird, cat, dog, horse, sheep, cow, elephant, bear, zebra, giraffe
+- **vehicle**: bicycle, car, motorcycle, airplane, bus, train, truck
+- **other**: any object that is not in `person`, `animal` or `vehicle`
 
 ## Development
 Currently only the helper functions are tested, using pytest.
