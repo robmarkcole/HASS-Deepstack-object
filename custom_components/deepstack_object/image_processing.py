@@ -266,7 +266,9 @@ class ObjectClassifyEntity(ImageProcessingEntity):
         )
         self._custom_model = custom_model
         self._targets = targets
-        self._targets_names = [target[CONF_TARGET] for target in targets]
+        self._targets_names = [
+            target[CONF_TARGET] for target in targets
+        ]  # can be a name or a type
         self._confidence = confidence
         self._camera = camera_entity
         if name:
@@ -317,7 +319,19 @@ class ObjectClassifyEntity(ImageProcessingEntity):
 
         for obj in self._objects:
             if obj["name"] or obj["object_type"] in self._targets_names:
-                if obj["confidence"] > self._confidence:
+                ## Retreive target confidence, if configured
+                ## First check if the type has a configured confidence
+                ## Then if a confidence for a named object, this takes precedence over type confidence
+                obj_confidence = None
+                for target in self._targets:
+                    if target[CONF_TARGET] == obj["object_type"]:
+                        obj_confidence = target[ATTR_CONFIDENCE]
+                for target in self._targets:
+                    if target[CONF_TARGET] == obj["name"]:
+                        obj_confidence = target[ATTR_CONFIDENCE]
+                if not obj_confidence:
+                    obj_confidence = self._confidence
+                if obj["confidence"] > obj_confidence:
                     if object_in_roi(self._roi_dict, obj["centroid"]):
                         self._targets_found.append(obj)
 
