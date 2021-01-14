@@ -380,7 +380,6 @@ class ObjectClassifyEntity(ImageProcessingEntity):
         """Return device specific state attributes."""
         attr = {}
         attr["targets"] = self._targets
-        attr["targets_names"] = self._targets_names
         attr["targets_found"] = [
             {obj["name"]: obj["confidence"]} for obj in self._targets_found
         ]
