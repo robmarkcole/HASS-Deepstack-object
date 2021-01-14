@@ -270,7 +270,7 @@ class ObjectClassifyEntity(ImageProcessingEntity):
         self._targets = targets
         for target in self._targets:
             if CONF_CONFIDENCE not in target.keys():
-                target[CONF_CONFIDENCE] = self._confidence
+                target.update({CONF_CONFIDENCE: self._confidence})
         self._targets_names = [
             target[CONF_TARGET] for target in targets
         ]  # can be a name or a type
@@ -319,19 +319,24 @@ class ObjectClassifyEntity(ImageProcessingEntity):
         self._targets_found = []
 
         for obj in self._objects:
-            if obj["name"] or obj["object_type"] in self._targets_names:
-                ## Then check if the type has a configured confidence, if yes assign
-                ## Then if a confidence for a named object, this takes precedence over type confidence
-                confidence = self._confidence
-                for target in self._targets:
-                    if target[CONF_TARGET] == obj["object_type"]:
-                        confidence = target[CONF_CONFIDENCE]
-                for target in self._targets:
-                    if target[CONF_TARGET] == obj["name"]:
-                        confidence = target[CONF_CONFIDENCE]
-                if obj["confidence"] > confidence:
-                    if object_in_roi(self._roi_dict, obj["centroid"]):
-                        self._targets_found.append(obj)
+            if not (
+                (obj["name"] in self._targets_names)
+                or (obj["object_type"] in self._targets_names)
+            ):
+                continue
+            ## Then check if the type has a configured confidence, if yes assign
+            ## Then if a confidence for a named object, this takes precedence over type confidence
+            confidence = None
+            for target in self._targets:
+                if obj["object_type"] == target[CONF_TARGET]:
+                    confidence = target[CONF_CONFIDENCE]
+            for target in self._targets:
+                if obj["name"] == target[CONF_TARGET]:
+                    confidence = target[CONF_CONFIDENCE]
+            if obj["confidence"] > confidence:
+                if not object_in_roi(self._roi_dict, obj["centroid"]):
+                    continue
+                self._targets_found.append(obj)
 
         self._state = len(self._targets_found)
         if self._state > 0:
