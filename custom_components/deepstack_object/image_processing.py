@@ -76,6 +76,7 @@ CONF_ROI_Y_MIN = "roi_y_min"
 CONF_ROI_X_MIN = "roi_x_min"
 CONF_ROI_Y_MAX = "roi_y_max"
 CONF_ROI_X_MAX = "roi_x_max"
+CONF_SCALE= "scale"
 CONF_CUSTOM_MODEL = "custom_model"
 
 DATETIME_FORMAT = "%Y-%m-%d_%H-%M-%S"
@@ -86,6 +87,7 @@ DEFAULT_ROI_Y_MIN = 0.0
 DEFAULT_ROI_Y_MAX = 1.0
 DEFAULT_ROI_X_MIN = 0.0
 DEFAULT_ROI_X_MAX = 1.0
+DEAULT_SCALE = 1.0
 DEFAULT_ROI = (
     DEFAULT_ROI_Y_MIN,
     DEFAULT_ROI_X_MIN,
@@ -127,6 +129,7 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
         vol.Optional(CONF_ROI_X_MIN, default=DEFAULT_ROI_X_MIN): cv.small_float,
         vol.Optional(CONF_ROI_Y_MAX, default=DEFAULT_ROI_Y_MAX): cv.small_float,
         vol.Optional(CONF_ROI_X_MAX, default=DEFAULT_ROI_X_MAX): cv.small_float,
+        vol.Optional(CONF_SCALE, default=DEAULT_SCALE): vol.All(vol.Coerce(float, vol.Range(min=0.1, max=1))),
         vol.Optional(CONF_SAVE_FILE_FOLDER): cv.isdir,
         vol.Optional(CONF_SAVE_TIMESTAMPTED_FILE, default=False): cv.boolean,
         vol.Optional(CONF_SHOW_BOXES, default=True): cv.boolean,
@@ -223,6 +226,7 @@ def setup_platform(hass, config, add_devices, discovery_info=None):
             roi_x_min=config[CONF_ROI_X_MIN],
             roi_y_max=config[CONF_ROI_Y_MAX],
             roi_x_max=config[CONF_ROI_X_MAX],
+            scale=config[CONF_SCALE],
             show_boxes=config[CONF_SHOW_BOXES],
             save_file_folder=save_file_folder,
             save_timestamped_file=config.get(CONF_SAVE_TIMESTAMPTED_FILE),
@@ -234,7 +238,7 @@ def setup_platform(hass, config, add_devices, discovery_info=None):
 
 
 class ObjectClassifyEntity(ImageProcessingEntity):
-    """Perform a face classification."""
+    """Perform a object classification."""
 
     def __init__(
         self,
@@ -249,6 +253,7 @@ class ObjectClassifyEntity(ImageProcessingEntity):
         roi_x_min,
         roi_y_max,
         roi_x_max,
+        scale,
         show_boxes,
         save_file_folder,
         save_timestamped_file,
@@ -291,24 +296,40 @@ class ObjectClassifyEntity(ImageProcessingEntity):
             "y_max": roi_y_max,
             "x_max": roi_x_max,
         }
-
+        self._scale = scale
         self._show_boxes = show_boxes
         self._last_detection = None
         self._image_width = None
         self._image_height = None
         self._save_file_folder = save_file_folder
         self._save_timestamped_file = save_timestamped_file
+        self._image=None
 
     def process_image(self, image):
         """Process an image."""
-        self._image_width, self._image_height = Image.open(
-            io.BytesIO(bytearray(image))
-        ).size
+        _LOGGER.debug((f"Open image")) 
+        self._image= Image.open(io.BytesIO(bytearray(image))
+        )
+        
+        self._image_width, self._image_height = self._image.size
+        
+        #resize image if different then default
+        if self._scale!=DEAULT_SCALE:
+            try: 
+              newsize=(self._image_width*self._scale , self._image_width*self._scale)
+              self._image.thumbnail(newsize,Image.ANTIALIAS)
+              self._image_width,self._image_height =self._image.size
+              with io.BytesIO() as output:
+                self._image.save(output,format="JPEG")
+                image=output.getvalue()
+                _LOGGER.debug((f"Image scaled with : {self._scale} W={self._image_width} H={self._image_height}"))
+            except Exception as err:
+              _LOGGER.error(f"Could not resize to scale : {self._scale} \r\n {err}") 
         self._state = None
         self._objects = []  # The parsed raw data
         self._targets_found = []
         saved_image_path = None
-
+    
         try:
             predictions = self._dsobject.detect(image)
         except ds.DeepstackException as exc:
@@ -344,7 +365,7 @@ class ObjectClassifyEntity(ImageProcessingEntity):
 
         if self._save_file_folder and self._state > 0:
             saved_image_path = self.save_image(
-                image, self._targets_found, self._save_file_folder,
+                 self._targets_found, self._save_file_folder,
             )
 
         # Fire events
@@ -396,13 +417,13 @@ class ObjectClassifyEntity(ImageProcessingEntity):
             attr[CONF_SAVE_TIMESTAMPTED_FILE] = self._save_timestamped_file
         return attr
 
-    def save_image(self, image, targets, directory) -> str:
+    def save_image(self, targets, directory) -> str:
         """Draws the actual bounding box of the detected objects.
 
         Returns: saved_image_path, which is the path to the saved timestamped file if configured, else the default saved image.
         """
         try:
-            img = Image.open(io.BytesIO(bytearray(image))).convert("RGB")
+            img = self._image.convert("RGB")
         except UnidentifiedImageError:
             _LOGGER.warning("Deepstack unable to process image, bad data")
             return
