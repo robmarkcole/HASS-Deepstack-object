@@ -310,7 +310,6 @@ class ObjectClassifyEntity(ImageProcessingEntity):
     def process_image(self, image):
         """Process an image."""
         self._image = Image.open(io.BytesIO(bytearray(image)))
-        _LOGGER.debug((f"Open image"))
         self._image_width, self._image_height = self._image.size
 
         # resize image if different then default
