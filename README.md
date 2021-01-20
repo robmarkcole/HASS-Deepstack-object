@@ -58,6 +58,7 @@ Configuration variables:
 - **roi_x_max**: (optional, default 1), range 0-1, must be more than roi_x_min
 - **roi_y_min**: (optional, default 0), range 0-1, must be less than roi_y_max
 - **roi_y_max**: (optional, default 1), range 0-1, must be more than roi_y_min
+-  **scale**: (optional, default 1.0), range 0.1-1.0, scaling factor for the images that are pulled from the camera stream. This results in smaller images files, especially when using  hires-cameras.
 - **source**: Must be a camera.
 - **targets**: The list of target object names and/or `object_type`, default `person`. Optionally a `confidence` can be set for this target, if not the default confidence is used. Note the minimum possible confidence is 10%.
 
