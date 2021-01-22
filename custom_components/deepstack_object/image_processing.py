@@ -71,6 +71,7 @@ CONF_TARGETS = "targets"
 CONF_TIMEOUT = "timeout"
 CONF_SAVE_FILE_FOLDER = "save_file_folder"
 CONF_SAVE_TIMESTAMPTED_FILE = "save_timestamped_file"
+CONF_ALWAYS_SAVE_LATEST_JPG = "always_save_latest_jpg"
 CONF_SHOW_BOXES = "show_boxes"
 CONF_ROI_Y_MIN = "roi_y_min"
 CONF_ROI_X_MIN = "roi_x_min"
@@ -134,6 +135,7 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
         ),
         vol.Optional(CONF_SAVE_FILE_FOLDER): cv.isdir,
         vol.Optional(CONF_SAVE_TIMESTAMPTED_FILE, default=False): cv.boolean,
+        vol.Optional(CONF_ALWAYS_SAVE_LATEST_JPG, default=False): cv.boolean,
         vol.Optional(CONF_SHOW_BOXES, default=True): cv.boolean,
     }
 )
@@ -232,6 +234,7 @@ def setup_platform(hass, config, add_devices, discovery_info=None):
             show_boxes=config[CONF_SHOW_BOXES],
             save_file_folder=save_file_folder,
             save_timestamped_file=config.get(CONF_SAVE_TIMESTAMPTED_FILE),
+            always_save_latest_jpg=config.get(CONF_ALWAYS_SAVE_LATEST_JPG),
             camera_entity=camera.get(CONF_ENTITY_ID),
             name=camera.get(CONF_NAME),
         )
@@ -259,6 +262,7 @@ class ObjectClassifyEntity(ImageProcessingEntity):
         show_boxes,
         save_file_folder,
         save_timestamped_file,
+        always_save_latest_jpg,
         camera_entity,
         name=None,
     ):
@@ -305,6 +309,7 @@ class ObjectClassifyEntity(ImageProcessingEntity):
         self._image_height = None
         self._save_file_folder = save_file_folder
         self._save_timestamped_file = save_timestamped_file
+        self._always_save_latest_jpg = always_save_latest_jpg
         self._image = None
 
     def process_image(self, image):
@@ -364,11 +369,11 @@ class ObjectClassifyEntity(ImageProcessingEntity):
         if self._state > 0:
             self._last_detection = dt_util.now().strftime(DATETIME_FORMAT)
 
-        if self._save_file_folder and self._state > 0:
-            saved_image_path = self.save_image(
-                self._targets_found,
-                self._save_file_folder,
-            )
+        if self._save_file_folder:
+            if self._state > 0 or self._always_save_latest_jpg:
+                saved_image_path = self.save_image(
+                    self._targets_found, self._save_file_folder,
+                )
 
         # Fire events
         for target in self._targets_found:
@@ -415,8 +420,8 @@ class ObjectClassifyEntity(ImageProcessingEntity):
         ]
         if self._save_file_folder:
             attr[CONF_SAVE_FILE_FOLDER] = str(self._save_file_folder)
-        if self._save_timestamped_file:
             attr[CONF_SAVE_TIMESTAMPTED_FILE] = self._save_timestamped_file
+            attr[CONF_ALWAYS_SAVE_LATEST_JPG] = self._always_save_latest_jpg
         return attr
 
     def save_image(self, targets, directory) -> str:
@@ -434,12 +439,7 @@ class ObjectClassifyEntity(ImageProcessingEntity):
         roi_tuple = tuple(self._roi_dict.values())
         if roi_tuple != DEFAULT_ROI and self._show_boxes:
             draw_box(
-                draw,
-                roi_tuple,
-                img.width,
-                img.height,
-                text="ROI",
-                color=GREEN,
+                draw, roi_tuple, img.width, img.height, text="ROI", color=GREEN,
             )
 
         for obj in targets:
