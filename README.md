@@ -30,6 +30,7 @@ image_processing:
     # confidence: 80
     save_file_folder: /config/snapshots/
     save_timestamped_file: True
+    scale: 0.75
     # roi_x_min: 0.35
     roi_x_max: 0.8
     #roi_y_min: 0.4
@@ -53,12 +54,12 @@ Configuration variables:
 - **confidence**: (Optional) The confidence (in %) above which detected targets are counted in the sensor state. Default value: 80
 - **save_file_folder**: (Optional) The folder to save processed images to. Note that folder path should be added to [whitelist_external_dirs](https://www.home-assistant.io/docs/configuration/basic/)
 - **save_timestamped_file**: (Optional, default `False`, requires `save_file_folder` to be configured) Save the processed image with the time of detection in the filename.
+- **scale**: (optional, default 1.0), range 0.1-1.0, applies a scaling factor to the images that are saved. This reduces the disk space used by saved images, and is especially beneficial when using high resolution cameras.
 - **show_boxes**: (optional, default `True`), if `False` bounding boxes are not shown on saved images
 - **roi_x_min**: (optional, default 0), range 0-1, must be less than roi_x_max
 - **roi_x_max**: (optional, default 1), range 0-1, must be more than roi_x_min
 - **roi_y_min**: (optional, default 0), range 0-1, must be less than roi_y_max
 - **roi_y_max**: (optional, default 1), range 0-1, must be more than roi_y_min
--  **scale**: (optional, default 1.0), range 0.1-1.0, scaling factor for the images that are pulled from the camera stream. This results in smaller images files, especially when using  hires-cameras.
 - **source**: Must be a camera.
 - **targets**: The list of target object names and/or `object_type`, default `person`. Optionally a `confidence` can be set for this target, if not the default confidence is used. Note the minimum possible confidence is 10%.
 
