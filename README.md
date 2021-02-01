@@ -142,6 +142,52 @@ And configure Deepstack to use the above directory for `save_file_folder`, then 
 <img src="https://github.com/robmarkcole/HASS-Deepstack-object/blob/master/docs/media_player.png" width="750">
 </p>
 
+## Custom Models
+Running your own custom models is possible by saving your custom models to a folder and then mounting that folder to the container.
+
+For example if you had a folder of a custom models saved under "/home/yourusername/my-models" you would run the following:
+```
+docker run -e VISION-DETECTION=True -e API-KEY="mysecretkey" -v /home/yourusername/my-models:/datastore -p 80:5000 deepquestai/deepstack
+---------------------------------------
+v1/vision/custom/fire
+---------------------------------------
+v1/vision/custom/licence-plate
+---------------------------------------
+v1/vision/custom/lock
+---------------------------------------
+v1/vision/custom/mask
+/v1/vision/detection
+```
+These URL's will be named the same as your model file name is.
+
+Add the following extra lines to your Home Assistant config, note you must add targets as well as defining the custom model. The targets are the labels you set during the training process:
+```yaml
+image_processing:
+  - platform: deepstack_object
+    ip_address: localhost
+    port: 80
+    api_key: mysecretkey
+    custom_model: mask
+    custom_model: fire
+    custom_model: licence-plate
+    custom_model: lock
+    save_file_folder: /config/snapshots/
+    save_timestamped_file: True
+    always_save_latest_jpg: True
+    targets:
+      - target: person
+      - target: mask
+        confidence: 60
+      - target: fire
+        confidence: 40
+      - target: licence-plate
+        confidence: 50
+      - target: lock
+    source:
+      - entity_id: camera.local_file
+```
+
+
 ## Face recognition
 For face recognition with Deepstack use https://github.com/robmarkcole/HASS-Deepstack-face
 
