@@ -149,12 +149,6 @@ For example if you had a folder of a custom models saved under "/home/youruserna
 ```
 docker run -e VISION-DETECTION=True -e API-KEY="mysecretkey" -v /home/yourusername/my-models:/datastore -p 80:5000 deepquestai/deepstack
 ---------------------------------------
-v1/vision/custom/fire
----------------------------------------
-v1/vision/custom/licence-plate
----------------------------------------
-v1/vision/custom/lock
----------------------------------------
 v1/vision/custom/mask
 /v1/vision/detection
 ```
@@ -168,9 +162,6 @@ image_processing:
     port: 80
     api_key: mysecretkey
     custom_model: mask
-    custom_model: fire
-    custom_model: licence-plate
-    custom_model: lock
     save_file_folder: /config/snapshots/
     save_timestamped_file: True
     always_save_latest_jpg: True
@@ -178,11 +169,6 @@ image_processing:
       - target: person
       - target: mask
         confidence: 60
-      - target: fire
-        confidence: 40
-      - target: licence-plate
-        confidence: 50
-      - target: lock
     source:
       - entity_id: camera.local_file
 ```
