@@ -14,13 +14,15 @@ from datetime import timedelta
 from typing import Tuple, Dict, List
 from pathlib import Path
 
-from PIL import Image, ImageDraw
+from PIL import Image, ImageDraw, ImageFont
 
 import deepstack.core as ds
 import homeassistant.helpers.config_validation as cv
 import homeassistant.util.dt as dt_util
 import voluptuous as vol
+"""
 from homeassistant.util.pil import draw_box
+"""
 from homeassistant.components.image_processing import (
     ATTR_CONFIDENCE,
     CONF_CONFIDENCE,
@@ -107,6 +109,8 @@ MIN_CONFIDENCE = 0.1
 RED = (255, 0, 0)  # For objects within the ROI
 GREEN = (0, 255, 0)  # For ROI box
 YELLOW = (255, 255, 0)  # Unused
+WHITE = (255,255,255) #For Text inside Textbox
+BLACK = (0,0,0) #Alternative Textcolor in Box
 
 TARGETS_SCHEMA = {
     vol.Required(CONF_TARGET): cv.string,
@@ -142,7 +146,59 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
 
 Box = namedtuple("Box", "y_min x_min y_max x_max")
 Point = namedtuple("Point", "y x")
+def draw_box(
+    img: Image,
+    box: Tuple[float, float, float, float],
+    img_width: int,
+    img_height: int,
+    text: str = "",
+    color: Tuple[int, int, int] = (255, 255, 0),
+) -> None:
+    """
+    Draw a bounding box on and image.
 
+    The bounding box is defined by the tuple (y_min, x_min, y_max, x_max)
+    where the coordinates are floats in the range [0.0, 1.0] and
+    relative to the width and height of the image.
+
+    For example, if an image is 100 x 200 pixels (height x width) and the bounding
+    box is `(0.1, 0.2, 0.5, 0.9)`, the upper-left and bottom-right coordinates of
+    the bounding box will be `(40, 10)` to `(180, 50)` (in (x,y) coordinates).
+    """
+    __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
+    line_width = 3
+    font_height = 20
+    draw = ImageDraw.Draw(img)
+    try:
+        myfont = ImageFont.load(os.path.join(__location__, '10x20.pil'))
+        """myfont = ImageFont.truetype(os.path.join(__location__, 'FreeMono.ttf'))"""
+    except:
+        myfont = ImageFont.load_default()
+    y_min, x_min, y_max, x_max = box
+    (left, right, top, bottom) = (
+        x_min * img_width,
+        x_max * img_width,
+        y_min * img_height,
+        y_max * img_height,
+    )
+
+    draw.line(
+        [(left, top), (left, bottom), (right, bottom), (right, top), (left, top)],
+        width=line_width,
+        fill=color,
+    )
+    if text:
+        text_size = myfont.getsize(text)
+        button_size = (text_size[0]+2, text_size[1]+2)
+        button_img = Image.new('RGBA', button_size, color)
+        button_draw = ImageDraw.Draw(button_img)
+        button_draw.text((1, 1), text, font=myfont, fill=WHITE)	
+        xloc=int(left)
+        yloc=int(abs(top - button_size[1]))
+        img.paste(button_img, (xloc, yloc))
+        """draw.text(
+            (left + line_width, abs(top - line_width - font_height)), text, fill=black,font=myfont
+        )"""
 
 def point_in_box(box: Box, point: Point) -> bool:
     """Return true if point lies in box"""
@@ -447,7 +503,7 @@ class ObjectClassifyEntity(ImageProcessingEntity):
         roi_tuple = tuple(self._roi_dict.values())
         if roi_tuple != DEFAULT_ROI and self._show_boxes:
             draw_box(
-                draw, roi_tuple, img.width, img.height, text="ROI", color=GREEN,
+                img, roi_tuple, img.width, img.height, text="ROI", color=GREEN,
             )
 
         for obj in targets:
@@ -460,7 +516,7 @@ class ObjectClassifyEntity(ImageProcessingEntity):
             box_label = f"{name}: {confidence:.1f}%"
 
             draw_box(
-                draw,
+                img,
                 (box["y_min"], box["x_min"], box["y_max"], box["x_max"]),
                 img.width,
                 img.height,
