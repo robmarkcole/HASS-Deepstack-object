@@ -29,8 +29,9 @@ image_processing:
     # custom_model: mask
     # confidence: 80
     save_file_folder: /config/snapshots/
+    save_file_format: png
     save_timestamped_file: True
-    always_save_latest_jpg: True
+    always_save_latest_file: True
     scale: 0.75
     # roi_x_min: 0.35
     roi_x_max: 0.8
@@ -54,8 +55,9 @@ Configuration variables:
 - **custom_model**: (Optional) The name of a custom model if you are using one. Don't forget to add the targets from the custom model below
 - **confidence**: (Optional) The confidence (in %) above which detected targets are counted in the sensor state. Default value: 80
 - **save_file_folder**: (Optional) The folder to save processed images to. Note that folder path should be added to [whitelist_external_dirs](https://www.home-assistant.io/docs/configuration/basic/)
+- **save_file_format**: (Optional, default `jpg`, alternatively `png`) The file format to save images as. `png` generally results in easier to read annotations.
 - **save_timestamped_file**: (Optional, default `False`, requires `save_file_folder` to be configured) Save the processed image with the time of detection in the filename.
-- **always_save_latest_jpg**: (Optional, default `False`, requires `save_file_folder` to be configured) Always save the last processed image, even if there were no detections.
+- **always_save_latest_file**: (Optional, default `False`, requires `save_file_folder` to be configured) Always save the last processed image, even if there were no detections.
 - **scale**: (optional, default 1.0), range 0.1-1.0, applies a scaling factor to the images that are saved. This reduces the disk space used by saved images, and is especially beneficial when using high resolution cameras.
 - **show_boxes**: (optional, default `True`), if `False` bounding boxes are not shown on saved images
 - **roi_x_min**: (optional, default 0), range 0-1, must be less than roi_x_max
