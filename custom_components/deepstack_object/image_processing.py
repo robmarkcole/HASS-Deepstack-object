@@ -69,9 +69,10 @@ CONF_API_KEY = "api_key"
 CONF_TARGET = "target"
 CONF_TARGETS = "targets"
 CONF_TIMEOUT = "timeout"
+CONF_SAVE_FILE_FORMAT = "save_file_format"
 CONF_SAVE_FILE_FOLDER = "save_file_folder"
 CONF_SAVE_TIMESTAMPTED_FILE = "save_timestamped_file"
-CONF_ALWAYS_SAVE_LATEST_JPG = "always_save_latest_jpg"
+CONF_ALWAYS_SAVE_LATEST_FILE = "always_save_latest_file"
 CONF_SHOW_BOXES = "show_boxes"
 CONF_ROI_Y_MIN = "roi_y_min"
 CONF_ROI_X_MIN = "roi_x_min"
@@ -102,6 +103,8 @@ FILE = "file"
 OBJECT = "object"
 SAVED_FILE = "saved_file"
 MIN_CONFIDENCE = 0.1
+JPG = "jpg"
+PNG = "png"
 
 # rgb(red, green, blue)
 RED = (255, 0, 0)  # For objects within the ROI
@@ -134,8 +137,9 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
             vol.Coerce(float, vol.Range(min=0.1, max=1))
         ),
         vol.Optional(CONF_SAVE_FILE_FOLDER): cv.isdir,
+        vol.Optional(CONF_SAVE_FILE_FORMAT, default=JPG): vol.In([JPG, PNG]),
         vol.Optional(CONF_SAVE_TIMESTAMPTED_FILE, default=False): cv.boolean,
-        vol.Optional(CONF_ALWAYS_SAVE_LATEST_JPG, default=False): cv.boolean,
+        vol.Optional(CONF_ALWAYS_SAVE_LATEST_FILE, default=False): cv.boolean,
         vol.Optional(CONF_SHOW_BOXES, default=True): cv.boolean,
     }
 )
@@ -233,8 +237,9 @@ def setup_platform(hass, config, add_devices, discovery_info=None):
             scale=config[CONF_SCALE],
             show_boxes=config[CONF_SHOW_BOXES],
             save_file_folder=save_file_folder,
+            save_file_format=config[CONF_SAVE_FILE_FORMAT],
             save_timestamped_file=config.get(CONF_SAVE_TIMESTAMPTED_FILE),
-            always_save_latest_jpg=config.get(CONF_ALWAYS_SAVE_LATEST_JPG),
+            always_save_latest_file=config.get(CONF_ALWAYS_SAVE_LATEST_FILE),
             camera_entity=camera.get(CONF_ENTITY_ID),
             name=camera.get(CONF_NAME),
         )
@@ -261,8 +266,9 @@ class ObjectClassifyEntity(ImageProcessingEntity):
         scale,
         show_boxes,
         save_file_folder,
+        save_file_format,
         save_timestamped_file,
-        always_save_latest_jpg,
+        always_save_latest_file,
         camera_entity,
         name=None,
     ):
@@ -309,13 +315,15 @@ class ObjectClassifyEntity(ImageProcessingEntity):
         self._image_width = None
         self._image_height = None
         self._save_file_folder = save_file_folder
+        self._save_file_format = save_file_format
+        self._always_save_latest_file = always_save_latest_file
         self._save_timestamped_file = save_timestamped_file
-        self._always_save_latest_jpg = always_save_latest_jpg
+        self._always_save_latest_file = always_save_latest_file
         self._image = None
 
     def process_image(self, image):
         """Process an image."""
-        self._image = Image.open(io.BytesIO(bytearray(image)))  # used for saving only
+        self._image = Image.open(io.BytesIO(bytearray(image)))
         self._image_width, self._image_height = self._image.size
 
         # resize image if different then default
@@ -377,7 +385,7 @@ class ObjectClassifyEntity(ImageProcessingEntity):
         self._summary = dict(Counter(targets_found))  # e.g. {'car':2, 'person':1}
 
         if self._save_file_folder:
-            if self._state > 0 or self._always_save_latest_jpg:
+            if self._state > 0 or self._always_save_latest_file:
                 saved_image_path = self.save_image(
                     self._targets_found, self._save_file_folder,
                 )
@@ -433,8 +441,9 @@ class ObjectClassifyEntity(ImageProcessingEntity):
         ]
         if self._save_file_folder:
             attr[CONF_SAVE_FILE_FOLDER] = str(self._save_file_folder)
+            attr[CONF_SAVE_FILE_FORMAT] = self._save_file_format
             attr[CONF_SAVE_TIMESTAMPTED_FILE] = self._save_timestamped_file
-            attr[CONF_ALWAYS_SAVE_LATEST_JPG] = self._always_save_latest_jpg
+            attr[CONF_ALWAYS_SAVE_LATEST_FILE] = self._always_save_latest_file
         return attr
 
     def save_image(self, targets, directory) -> str:
@@ -482,14 +491,14 @@ class ObjectClassifyEntity(ImageProcessingEntity):
 
         # Save images, returning the path of saved image as str
         latest_save_path = (
-            directory / f"{get_valid_filename(self._name).lower()}_latest.jpg"
+            directory / f"{get_valid_filename(self._name).lower()}_latest.{self._save_file_format}"
         )
         img.save(latest_save_path)
         _LOGGER.info("Deepstack saved file %s", latest_save_path)
         saved_image_path = latest_save_path
 
         if self._save_timestamped_file:
-            timestamp_save_path = directory / f"{self._name}_{self._last_detection}.jpg"
+            timestamp_save_path = directory / f"{self._name}_{self._last_detection}.{self._save_file_format}"
             img.save(timestamp_save_path)
             _LOGGER.info("Deepstack saved file %s", timestamp_save_path)
             saved_image_path = timestamp_save_path
