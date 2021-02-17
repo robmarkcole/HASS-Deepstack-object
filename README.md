@@ -205,3 +205,12 @@ Currently only the helper functions are tested, using pytest.
 * `source venv/bin/activate`
 * `pip install -r requirements-dev.txt`
 * `venv/bin/py.test custom_components/deepstack_object/tests.py -vv -p no:warnings`
+
+## Videos of usage
+Checkout this excellent video of usage from [Everything Smart Home](https://www.youtube.com/channel/UCrVLgIniVg6jW38uVqDRIiQ)
+
+[![](http://img.youtube.com/vi/vMdpLiAB9dI/0.jpg)](http://www.youtube.com/watch?v=vMdpLiAB9dI "")
+
+Also see the video of a presentation I did to the [IceVision](https://airctic.com/) community on deploying Deepstack on a Jetson nano.
+
+[![](http://img.youtube.com/vi/1O0mCaA22fE/0.jpg)](http://www.youtube.com/watch?v=1O0mCaA22fE "")
