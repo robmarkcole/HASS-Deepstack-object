@@ -296,6 +296,7 @@ class ObjectClassifyEntity(ImageProcessingEntity):
         self._state = None
         self._objects = []  # The parsed raw data
         self._targets_found = []
+        self._last_detection = None
 
         self._roi_dict = {
             "y_min": roi_y_min,
@@ -305,7 +306,6 @@ class ObjectClassifyEntity(ImageProcessingEntity):
         }
         self._scale = scale
         self._show_boxes = show_boxes
-        self._last_detection = None
         self._image_width = None
         self._image_height = None
         self._save_file_folder = save_file_folder
@@ -315,7 +315,7 @@ class ObjectClassifyEntity(ImageProcessingEntity):
 
     def process_image(self, image):
         """Process an image."""
-        self._image = Image.open(io.BytesIO(bytearray(image)))
+        self._image = Image.open(io.BytesIO(bytearray(image)))  # used for saving only
         self._image_width, self._image_height = self._image.size
 
         # resize image if different then default
@@ -406,6 +406,11 @@ class ObjectClassifyEntity(ImageProcessingEntity):
         return self._name
 
     @property
+    def unit_of_measurement(self):
+        """Return the unit of measurement."""
+        return "targets"
+
+    @property
     def should_poll(self):
         """Return the polling state."""
         return False
@@ -479,8 +484,8 @@ class ObjectClassifyEntity(ImageProcessingEntity):
         latest_save_path = (
             directory / f"{get_valid_filename(self._name).lower()}_latest.jpg"
         )
-        _LOGGER.info("Deepstack saved file %s", latest_save_path)
         img.save(latest_save_path)
+        _LOGGER.info("Deepstack saved file %s", latest_save_path)
         saved_image_path = latest_save_path
 
         if self._save_timestamped_file:
