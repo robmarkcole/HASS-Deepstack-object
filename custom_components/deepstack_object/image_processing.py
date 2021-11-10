@@ -37,9 +37,6 @@ from homeassistant.const import (
     ATTR_NAME,
     CONF_IP_ADDRESS,
     CONF_PORT,
-    HTTP_BAD_REQUEST,
-    HTTP_OK,
-    HTTP_UNAUTHORIZED,
 )
 from homeassistant.core import split_entity_id
 
@@ -387,7 +384,8 @@ class ObjectClassifyEntity(ImageProcessingEntity):
         if self._save_file_folder:
             if self._state > 0 or self._always_save_latest_file:
                 saved_image_path = self.save_image(
-                    self._targets_found, self._save_file_folder,
+                    self._targets_found,
+                    self._save_file_folder,
                 )
 
         # Fire events
@@ -461,7 +459,12 @@ class ObjectClassifyEntity(ImageProcessingEntity):
         roi_tuple = tuple(self._roi_dict.values())
         if roi_tuple != DEFAULT_ROI and self._show_boxes:
             draw_box(
-                draw, roi_tuple, img.width, img.height, text="ROI", color=GREEN,
+                draw,
+                roi_tuple,
+                img.width,
+                img.height,
+                text="ROI",
+                color=GREEN,
             )
 
         for obj in targets:
@@ -491,14 +494,18 @@ class ObjectClassifyEntity(ImageProcessingEntity):
 
         # Save images, returning the path of saved image as str
         latest_save_path = (
-            directory / f"{get_valid_filename(self._name).lower()}_latest.{self._save_file_format}"
+            directory
+            / f"{get_valid_filename(self._name).lower()}_latest.{self._save_file_format}"
         )
         img.save(latest_save_path)
         _LOGGER.info("Deepstack saved file %s", latest_save_path)
         saved_image_path = latest_save_path
 
         if self._save_timestamped_file:
-            timestamp_save_path = directory / f"{self._name}_{self._last_detection}.{self._save_file_format}"
+            timestamp_save_path = (
+                directory
+                / f"{self._name}_{self._last_detection}.{self._save_file_format}"
+            )
             img.save(timestamp_save_path)
             _LOGGER.info("Deepstack saved file %s", timestamp_save_path)
             saved_image_path = timestamp_save_path
