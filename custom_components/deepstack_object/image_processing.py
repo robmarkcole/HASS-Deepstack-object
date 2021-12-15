@@ -422,7 +422,7 @@ class ObjectClassifyEntity(ImageProcessingEntity):
         return False
 
     @property
-    def device_state_attributes(self) -> Dict:
+    def extra_state_attributes(self) -> Dict:
         """Return device specific state attributes."""
         attr = {}
         attr["targets"] = self._targets
