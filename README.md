@@ -3,7 +3,7 @@
 
 On your machine with docker, run Deepstack with the object detection service active on port `80`:
 ```
-docker run -e VISION-DETECTION=True -e API-KEY="mysecretkey" -v localstorage:/datastore -p 80:5000 deepquestai/deepstack
+docker run -e VISION-DETECTION=True -v localstorage:/datastore -p 80:5000 deepquestai/deepstack
 ```
 
 ## Usage of this component
@@ -25,7 +25,6 @@ image_processing:
   - platform: deepstack_object
     ip_address: localhost
     port: 80
-    api_key: mysecretkey
     # custom_model: mask
     # confidence: 80
     save_file_folder: /config/snapshots/
@@ -50,7 +49,6 @@ image_processing:
 Configuration variables:
 - **ip_address**: the ip address of your deepstack instance.
 - **port**: the port of your deepstack instance.
-- **api_key**: (Optional) Any API key you have set.
 - **timeout**: (Optional, default 10 seconds) The timeout for requests to deepstack.
 - **custom_model**: (Optional) The name of a custom model if you are using one. Don't forget to add the targets from the custom model below
 - **confidence**: (Optional) The confidence (in %) above which detected targets are counted in the sensor state. Default value: 80
