@@ -78,7 +78,7 @@ CONF_ROI_X_MAX = "roi_x_max"
 CONF_SCALE = "scale"
 CONF_CUSTOM_MODEL = "custom_model"
 
-DATETIME_FORMAT = "%Y-%m-%d_%H-%M-%S"
+DATETIME_FORMAT = "%Y-%m-%d_%H-%M-%S-%f"
 DEFAULT_API_KEY = ""
 DEFAULT_TARGETS = [{CONF_TARGET: PERSON}]
 DEFAULT_TIMEOUT = 10
