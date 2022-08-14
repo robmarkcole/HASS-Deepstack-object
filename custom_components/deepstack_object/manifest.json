@@ -2,7 +2,7 @@
         "domain": "deepstack_object",
         "name": "deepstack object custom integration",
         "documentation": "https://github.com/robmarkcole/HASS-Deepstack-object",
-        "version": "4.3.1",
+        "version": "4.4.0",
         "requirements": [
                 "pillow",
                 "deepstack-python==0.8"

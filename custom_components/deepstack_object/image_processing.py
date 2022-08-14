@@ -77,7 +77,7 @@ CONF_ROI_Y_MAX = "roi_y_max"
 CONF_ROI_X_MAX = "roi_x_max"
 CONF_SCALE = "scale"
 CONF_CUSTOM_MODEL = "custom_model"
-CONF_CROP_ROI = "crop_roi"
+CONF_CROP_ROI = "crop_to_roi"
 
 DATETIME_FORMAT = "%Y-%m-%d_%H-%M-%S-%f"
 DEFAULT_API_KEY = ""
