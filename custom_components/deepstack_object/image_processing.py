@@ -77,6 +77,7 @@ CONF_ROI_Y_MAX = "roi_y_max"
 CONF_ROI_X_MAX = "roi_x_max"
 CONF_SCALE = "scale"
 CONF_CUSTOM_MODEL = "custom_model"
+CONF_CROP_ROI = "crop_to_roi"
 
 DATETIME_FORMAT = "%Y-%m-%d_%H-%M-%S-%f"
 DEFAULT_API_KEY = ""
@@ -138,6 +139,7 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
         vol.Optional(CONF_SAVE_TIMESTAMPTED_FILE, default=False): cv.boolean,
         vol.Optional(CONF_ALWAYS_SAVE_LATEST_FILE, default=False): cv.boolean,
         vol.Optional(CONF_SHOW_BOXES, default=True): cv.boolean,
+        vol.Optional(CONF_CROP_ROI, default=False): cv.boolean,
     }
 )
 
@@ -237,6 +239,7 @@ def setup_platform(hass, config, add_devices, discovery_info=None):
             save_file_format=config[CONF_SAVE_FILE_FORMAT],
             save_timestamped_file=config.get(CONF_SAVE_TIMESTAMPTED_FILE),
             always_save_latest_file=config.get(CONF_ALWAYS_SAVE_LATEST_FILE),
+            crop_roi=config[CONF_CROP_ROI],
             camera_entity=camera.get(CONF_ENTITY_ID),
             name=camera.get(CONF_NAME),
         )
@@ -266,6 +269,7 @@ class ObjectClassifyEntity(ImageProcessingEntity):
         save_file_format,
         save_timestamped_file,
         always_save_latest_file,
+        crop_roi,
         camera_entity,
         name=None,
     ):
@@ -307,6 +311,7 @@ class ObjectClassifyEntity(ImageProcessingEntity):
             "y_max": roi_y_max,
             "x_max": roi_x_max,
         }
+        self._crop_roi = crop_roi
         self._scale = scale
         self._show_boxes = show_boxes
         self._image_width = None
@@ -322,7 +327,24 @@ class ObjectClassifyEntity(ImageProcessingEntity):
         """Process an image."""
         self._image = Image.open(io.BytesIO(bytearray(image)))
         self._image_width, self._image_height = self._image.size
-
+        # scale to roi
+        if self._crop_roi:
+            roi = (
+                self._image_width * self._roi_dict["x_min"],
+                self._image_height * self._roi_dict["y_min"],
+                self._image_width * (self._roi_dict["x_max"]),
+                self._image_height * (self._roi_dict["y_max"])
+            )
+            self._image = self._image.crop(roi)
+            self._image_width, self._image_height = self._image.size
+            with io.BytesIO() as output:
+                self._image.save(output, format="JPEG")
+                image = output.getvalue()
+            _LOGGER.debug(
+                (
+                    f"Image cropped with : {self._roi_dict} W={self._image_width} H={self._image_height}"
+                )
+            )
         # resize image if different then default
         if self._scale != DEAULT_SCALE:
             newsize = (self._image_width * self._scale, self._image_width * self._scale)
@@ -368,7 +390,7 @@ class ObjectClassifyEntity(ImageProcessingEntity):
                 if obj["name"] == target[CONF_TARGET]:
                     confidence = target[CONF_CONFIDENCE]
             if obj["confidence"] > confidence:
-                if not object_in_roi(self._roi_dict, obj["centroid"]):
+                if not self._crop_roi and not object_in_roi(self._roi_dict, obj["centroid"]):
                     continue
                 self._targets_found.append(obj)
 
@@ -457,7 +479,7 @@ class ObjectClassifyEntity(ImageProcessingEntity):
         draw = ImageDraw.Draw(img)
 
         roi_tuple = tuple(self._roi_dict.values())
-        if roi_tuple != DEFAULT_ROI and self._show_boxes:
+        if roi_tuple != DEFAULT_ROI and self._show_boxes and not self._crop_roi:
             draw_box(
                 draw,
                 roi_tuple,

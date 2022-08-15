@@ -37,6 +37,7 @@ image_processing:
     roi_x_max: 0.8
     #roi_y_min: 0.4
     roi_y_max: 0.8
+    crop_to_roi: True
     targets:
       - target: person
       - target: vehicle
@@ -64,6 +65,7 @@ Configuration variables:
 - **roi_x_max**: (optional, default 1), range 0-1, must be more than roi_x_min
 - **roi_y_min**: (optional, default 0), range 0-1, must be less than roi_y_max
 - **roi_y_max**: (optional, default 1), range 0-1, must be more than roi_y_min
+- **crop_to_roi**: (optional, default False), crops the image to the specified roi.  May improve object detection accuracy when a region-of-interest is applied
 - **source**: Must be a camera.
 - **targets**: The list of target object names and/or `object_type`, default `person`. Optionally a `confidence` can be set for this target, if not the default confidence is used. Note the minimum possible confidence is 10%.
 
