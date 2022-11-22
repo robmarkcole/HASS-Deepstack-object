@@ -1,4 +1,4 @@
 pytest
-pillow==8.2.0
+pillow==9.3.0
 homeassistant
 deepstack-python==0.4
