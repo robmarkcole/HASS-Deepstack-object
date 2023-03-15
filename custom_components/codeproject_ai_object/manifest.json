@@ -1,0 +1,14 @@
+{
+  "domain": "codeproject_ai_object",
+  "name": "CodeProject.AI Server object custom integration",
+  "documentation": "https://github.com/codeproject/CodeProject.AI-HomeAssist-ObjectDetect",
+  "version": "4.6.0",
+  "requirements": [
+    "pillow",
+    "codeproject-ai-sdk==0.1"
+  ],
+  "dependencies": [],
+  "codeowners": [
+    "@codeproject"
+  ]
+}

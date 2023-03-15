@@ -1,4 +1,4 @@
-"""The tests for the Deepstack object component."""
+"""The tests for the CodeProject.AI Server object component."""
 from .image_processing import get_objects
 
 TARGET = "person"
