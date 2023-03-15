@@ -1,20 +1,32 @@
-# HASS-Deepstack-object
-[Home Assistant](https://www.home-assistant.io/) custom component for Deepstack object detection. [Deepstack](https://docs.deepstack.cc/) is a service which runs in a docker container and exposes various computer vision models via a REST API. Deepstack [object detection](https://docs.deepstack.cc/object-detection/index.html) can identify 80 different kinds of objects (listed at bottom of this readme), including people (`person`), vehicles and animals. Alternatively a custom object detection model can be used. There is no cost for using Deepstack and it is [fully open source](https://github.com/johnolafenwa/DeepStack). To run Deepstack you will need a machine with 8 GB RAM, or an NVIDIA Jetson.
+# CodeProject.AI Home Assistant Object Detection custom component
 
-On your machine with docker, run Deepstack with the object detection service active on port `80`:
+This component is a direct port of the [HASS-Deepstack-object](https://github.com/robmarkcole/HASS-Deepstack-object) component by [Robin Cole](https://github.com/robmarkcole). This component provides AI-based Object Detection capabilities using [CodeProject.AI Server](https://codeproject.com/ai). 
+
+ [CodeProject.AI Server](https://codeproject.com/ai) is a service which runs either in a Docker container or as a Windows Service and exposes various an API for many AI inferencing operations via a REST API. The Object Detection capabilities use the [YOLO](https://arxiv.org/pdf/1506.02640.pdf) algorithm as implemented by Ultralytics and others. It can identify 80 different kinds of objects by default, but custom models are also available that focus on specific objects such as animals, license plates or objects typically encountered by home webcams. CodeProject.AI Server is free, locally installed, and can run without an external internet connection, is is comatible with Windows, Linux, macOS. It can run on Raspberry Pi, and supports CUDA and embedded Intel GPUs.
+
+On the machine in which you are running CodeProject.AI server, either ensure the service is running, or if using Docker, [start a Docker container](https://www.codeproject.com/ai/docs/why/running_in_docker.html#launching-a-container). 
+
+### A note on Ports
+CodeProject.AI Server typically runs on port 32168, so you will need to ensure the machine hosting the server has this port open. If you need to changes ports (eg switch to port 80) thenf or Docker use the -p flag:
 ```
-docker run -e VISION-DETECTION=True -e API-KEY="mysecretkey" -v localstorage:/datastore -p 80:5000 deepquestai/deepstack
+docker run --name CodeProject.AI-Server -d -p 80:32168 ^
+ --mount type=bind,source=C:\ProgramData\CodeProject\AI\docker\data,target=/etc/codeproject/ai ^
+ --mount type=bind,source=C:\ProgramData\CodeProject\AI\docker\modules,target=/app/modules ^
+   codeproject/ai-server
 ```
+For Windows server you will need to either set an environment variable `CPAI_PORT` with value 80 (on the host running CodeProject.AI Server), or edit the appsettings.json file in the `C:\Program Files\CodeProject\AI folder` and change the value of the CPAI_PORT environment variable in the file.
 
 ## Usage of this component
-The `deepstack_object` component adds an `image_processing` entity where the state of the entity is the total count of target objects that are above a `confidence` threshold which has a default value of 80%. You can have a single target object class, or multiple. The time of the last detection of any target object is in the `last target detection` attribute. The type and number of objects (of any confidence) is listed in the `summary` attributes. Optionally a region of interest (ROI) can be configured, and only objects with their center (represented by a `x`) within the ROI will be included in the state count. The ROI will be displayed as a green box, and objects with their center in the ROI have a red box.
+Thanks again to Robin for the original write up for his component.
 
-Also optionally the processed image can be saved to disk, with bounding boxes showing the location of detected objects. If `save_file_folder` is configured, an image with filename of format `deepstack_object_{source name}_latest.jpg` is over-written on each new detection of a target. Optionally this image can also be saved with a timestamp in the filename, if `save_timestamped_file` is configured as `True`. An event `deepstack.object_detected` is fired for each object detected that is in the targets list, and meets the confidence and ROI criteria. If you are a power user with advanced needs such as zoning detections or you want to track multiple object types, you will need to use the `deepstack.object_detected` events.
+The `codeproject_ai_object` component adds an `image_processing` entity where the state of the entity is the total count of target objects that are above a `confidence` threshold which has a default value of 80%. You can have a single target object class, or multiple. The time of the last detection of any target object is in the `last target detection` attribute. The type and number of objects (of any confidence) is listed in the `summary` attributes. Optionally a region of interest (ROI) can be configured, and only objects with their center (represented by a `x`) within the ROI will be included in the state count. The ROI will be displayed as a green box, and objects with their center in the ROI have a red box.
+
+Also optionally the processed image can be saved to disk, with bounding boxes showing the location of detected objects. If `save_file_folder` is configured, an image with filename of format `codeproject_ai_object_{source name}_latest.jpg` is over-written on each new detection of a target. Optionally this image can also be saved with a timestamp in the filename, if `save_timestamped_file` is configured as `True`. An event `codeproject_ai.object_detected` is fired for each object detected that is in the targets list, and meets the confidence and ROI criteria. If you are a power user with advanced needs such as zoning detections or you want to track multiple object types, you will need to use the `codeproject_ai.object_detected` events.
 
 **Note** that by default the component will **not** automatically scan images, but requires you to call the `image_processing.scan` service e.g. using an automation triggered by motion.
 
 ## Home Assistant setup
-Place the `custom_components` folder in your configuration directory (or add its contents to an existing `custom_components` folder). Then configure object detection. **Important:** It is necessary to configure only a single camera per `deepstack_object` entity. If you want to process multiple cameras, you will therefore need multiple `deepstack_object` `image_processing` entities.
+Place the `custom_components` folder in your configuration directory (or add its contents to an existing `custom_components` folder). Then configure object detection. **Important:** It is necessary to configure only a single camera per `codeproject_ai_object` entity. If you want to process multiple cameras, you will therefore need multiple `codeproject_ai_object` `image_processing` entities.
 
 The component can optionally save snapshots of the processed images. If you would like to use this option, you need to create a folder where the snapshots will be stored. The folder should be in the same folder where your `configuration.yaml` file is located. In the example below, we have named the folder `snapshots`.
 
@@ -22,10 +34,9 @@ Add to your Home-Assistant config:
 
 ```yaml
 image_processing:
-  - platform: deepstack_object
+  - platform: codeproject_ai_object
     ip_address: localhost
-    port: 80
-    api_key: mysecretkey
+    port: 32168
     # custom_model: mask
     # confidence: 80
     save_file_folder: /config/snapshots/
@@ -49,10 +60,9 @@ image_processing:
 ```
 
 Configuration variables:
-- **ip_address**: the ip address of your deepstack instance.
-- **port**: the port of your deepstack instance.
-- **api_key**: (Optional) Any API key you have set.
-- **timeout**: (Optional, default 10 seconds) The timeout for requests to deepstack.
+- **ip_address**: the ip address of your CodeProject.AI Server instance.
+- **port**: the port of your CodeProject.AI Server instance.
+- **timeout**: (Optional, default 10 seconds) The timeout for requests to CodeProject.AI Server.
 - **custom_model**: (Optional) The name of a custom model if you are using one. Don't forget to add the targets from the custom model below
 - **confidence**: (Optional) The confidence (in %) above which detected targets are counted in the sensor state. Default value: 80
 - **save_file_folder**: (Optional) The folder to save processed images to. Note that folder path should be added to [whitelist_external_dirs](https://www.home-assistant.io/docs/configuration/basic/)
@@ -71,20 +81,10 @@ Configuration variables:
 
 For the ROI, the (x=0,y=0) position is the top left pixel of the image, and the (x=1,y=1) position is the bottom right pixel of the image. It might seem a bit odd to have y running from top to bottom of the image, but that is the coordinate system used by pillow.
 
-I created an app for exploring the config parameters at [https://github.com/robmarkcole/deepstack-ui](https://github.com/robmarkcole/deepstack-ui)
+#### Event `codeproject_ai.object_detected`
+An event `codeproject_ai.object_detected` is fired for each object detected above the configured `confidence` threshold. This is the recommended way to check the confidence of detections, and to keep track of objects that are not configured as the `target` (use `Developer tools -> EVENTS -> :Listen to events`, to monitor these events). 
 
-<p align="center">
-<img src="https://github.com/robmarkcole/HASS-Deepstack-object/blob/master/docs/object_usage.png" width="500">
-</p>
-
-<p align="center">
-<img src="https://github.com/robmarkcole/HASS-Deepstack-object/blob/master/docs/object_detail.png" width="350">
-</p>
-
-#### Event `deepstack.object_detected`
-An event `deepstack.object_detected` is fired for each object detected above the configured `confidence` threshold. This is the recommended way to check the confidence of detections, and to keep track of objects that are not configured as the `target` (use `Developer tools -> EVENTS -> :Listen to events`, to monitor these events). 
-
-An example use case for event is to get an alert when some rarely appearing object is detected, or to increment a [counter](https://www.home-assistant.io/components/counter/). The `deepstack.object_detected` event payload includes:
+An example use case for event is to get an alert when some rarely appearing object is detected, or to increment a [counter](https://www.home-assistant.io/components/counter/). The `codeproject_ai.object_detected` event payload includes:
 
 - `entity_id` : the entity id responsible for the event
 - `name` : the name of the object detected
@@ -94,7 +94,7 @@ An example use case for event is to get an alert when some rarely appearing obje
 - `centroid` : the centre point of the object
 - `saved_file` : the path to the saved annotated image, which is the timestamped file if `save_timestamped_file` is True, or the default saved image if False
 
-An example automation using the `deepstack.object_detected` event is given below:
+An example automation using the `codeproject_ai.object_detected` event is given below:
 
 ```yaml
 - action:
@@ -107,18 +107,18 @@ An example automation using the `deepstack.object_detected` event is given below
   id: "1120092824622"
   trigger:
     - platform: event
-      event_type: deepstack.object_detected
+      event_type: codeproject_ai.object_detected
       event_data:
         name: person
 ```
 
-## Displaying the deepstack latest jpg file
-It easy to display the `deepstack_object_{source name}_latest.jpg` image with a [local_file](https://www.home-assistant.io/components/local_file/) camera. An example configuration is:
+## Displaying the CodeProject.AI latest jpg file
+It easy to display the `codeproject_ai_object_{source name}_latest.jpg` image with a [local_file](https://www.home-assistant.io/components/local_file/) camera. An example configuration is:
 ```yaml
 camera:
   - platform: local_file
-    file_path: /config/snapshots/deepstack_object_local_file_latest.jpg
-    name: deepstack_latest_person
+    file_path: /config/snapshots/codeproject_ai_object_local_file_latest.jpg
+    name: codeproject_ai_latest_person
 ```
 
 ## Info on box
@@ -140,43 +140,38 @@ homeassistant:
 
 media_source:
 ```
-And configure Deepstack to use the above directory for `save_file_folder`, then saved images can be browsed from the HA front end like below:
+And configure CodeProject.AI Server to use the above directory for `save_file_folder`, then saved images can be browsed from the HA front end like below:
 
 <p align="center">
 <img src="https://github.com/robmarkcole/HASS-Deepstack-object/blob/master/docs/media_player.png" width="750">
+
+<small>(Image courtesy of Robin Cole, and uses his original Deepstack implementation)</small>
 </p>
 
 ## Face recognition
-For face recognition with Deepstack use https://github.com/robmarkcole/HASS-Deepstack-face
+For face recognition with CodeProject.AI Server use https://github.com/codeproject/CodeProject.AI-HomeAssist-FaceDetect
 
 ### Support
-For code related issues such as suspected bugs, please open an issue on this repo. For general chat or to discuss Home Assistant specific issues related to configuration or use cases, please [use this thread on the Home Assistant forums](https://community.home-assistant.io/t/face-and-person-detection-with-deepstack-local-and-free/92041).
+ - For code related issues such as suspected bugs **with this integration**, please open an issue on this repo.
+ - For CodeProject.AI Server setup questions, please see see the [CodeProject.AI Server docs](https://www.codeproject.com/AI/docs/)
+ - For bugs and suggestions related to CodeProject.AI Server, please use the [CodeProject.AI forum](https://www.codeproject.com/Feature/CodeProjectAI-Discussions.aspx). 
+ - For general chat or to discuss Home Assistant specific issues related to configuration or use cases, please [use the Home Assistant forums](https://community.home-assistant.io/).
 
 ### Docker tips
+
+Please view the [CodeProject.AI Server docs](https://www.codeproject.com/AI/docs/why/running_in_docker.html)
 Add the `-d` flag to run the container in background
 
 ### FAQ
 Q1: I get the following warning, is this normal?
 ```
-2019-01-15 06:37:52 WARNING (MainThread) [homeassistant.loader] You are using a custom component for image_processing.deepstack_face which has not been tested by Home Assistant. This component might cause stability problems, be sure to disable it if you do experience issues with Home Assistant.
+2019-01-15 06:37:52 WARNING (MainThread) [homeassistant.loader] You are using a custom component for image_processing.codeproject_ai_face which has not been tested by Home Assistant. This component might cause stability problems, be sure to disable it if you do experience issues with Home Assistant.
 ```
 A1: Yes this is normal
 
 ------
 
-Q4: What are the minimum hardware requirements for running Deepstack?
-
-A4. Based on my experience, I would allow 0.5 GB RAM per model.
-
-------
-
-Q5: Can object detection be configured to detect car/car colour?
-
-A5: The list of detected object classes is at the end of the page [here](https://deepstackpython.readthedocs.io/en/latest/objectdetection.html). There is no support for detecting the colour of an object.
-
-------
-
-Q6: I am getting an error from Home Assistant: `Platform error: image_processing - Integration deepstack_object not found`
+Q6: I am getting an error from Home Assistant: `Platform error: image_processing - Integration codeproject_ai_object not found`
 
 A6: This can happen when you are running in Docker/Hassio, and indicates that one of the dependencies isn't installed. It is necessary to reboot your Hassio device, or rebuild your Docker container. Note that just restarting Home Assistant will not resolve this.
 
@@ -208,9 +203,12 @@ Currently only the helper functions are tested, using pytest.
 * `python3 -m venv venv`
 * `source venv/bin/activate`
 * `pip install -r requirements-dev.txt`
-* `venv/bin/py.test custom_components/deepstack_object/tests.py -vv -p no:warnings`
+* `venv/bin/py.test custom_components/codeproject_ai_object/tests.py -vv -p no:warnings`
 
 ## Videos of usage
+
+Robin Cole has a series of videos using Deepstack with Home Asssistant which may provide some assistance.
+
 Checkout this excellent video of usage from [Everything Smart Home](https://www.youtube.com/channel/UCrVLgIniVg6jW38uVqDRIiQ)
 
 [![](http://img.youtube.com/vi/vMdpLiAB9dI/0.jpg)](http://www.youtube.com/watch?v=vMdpLiAB9dI "")
