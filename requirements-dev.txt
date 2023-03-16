@@ -1,4 +1,4 @@
 pytest
 pillow==8.2.0
 homeassistant
-codeproject-ai-sdk==0.1
+codeproject-ai-api
