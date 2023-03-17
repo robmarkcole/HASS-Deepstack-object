@@ -14,13 +14,13 @@ from datetime import timedelta
 from typing import Tuple, Dict, List
 from pathlib import Path
 
-from PIL import Image, ImageDraw
+from PIL import Image, ImageDraw, UnidentifiedImageError
+import voluptuous as vol
 
 import codeprojectai.core as cpai
 
 import homeassistant.helpers.config_validation as cv
 import homeassistant.util.dt as dt_util
-import voluptuous as vol
 from homeassistant.util.pil import draw_box
 from homeassistant.components.image_processing import (
     ATTR_CONFIDENCE,
@@ -63,7 +63,6 @@ VEHICLES = ["bicycle", "car", "motorcycle", "airplane", "bus", "train", "truck"]
 OBJECT_TYPES = [ANIMAL, OTHER, PERSON, VEHICLE]
 
 
-CONF_API_KEY = "api_key"
 CONF_TARGET = "target"
 CONF_TARGETS = "targets"
 CONF_TIMEOUT = "timeout"
@@ -81,7 +80,6 @@ CONF_CUSTOM_MODEL = "custom_model"
 CONF_CROP_ROI = "crop_to_roi"
 
 DATETIME_FORMAT = "%Y-%m-%d_%H-%M-%S-%f"
-DEFAULT_API_KEY = ""
 DEFAULT_TARGETS = [{CONF_TARGET: PERSON}]
 DEFAULT_TIMEOUT = 10
 DEFAULT_ROI_Y_MIN = 0.0
@@ -122,7 +120,7 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
     {
         vol.Required(CONF_IP_ADDRESS): cv.string,
         vol.Required(CONF_PORT): cv.port,
-        vol.Optional(CONF_API_KEY, default=DEFAULT_API_KEY): cv.string,
+        // vol.Optional(CONF_API_KEY, default=DEFAULT_API_KEY): cv.string,
         vol.Optional(CONF_TIMEOUT, default=DEFAULT_TIMEOUT): cv.positive_int,
         vol.Optional(CONF_CUSTOM_MODEL, default=""): cv.string,
         vol.Optional(CONF_TARGETS, default=DEFAULT_TARGETS): vol.All(
@@ -225,7 +223,6 @@ def setup_platform(hass, config, add_devices, discovery_info=None):
         object_entity = ObjectClassifyEntity(
             ip_address=config.get(CONF_IP_ADDRESS),
             port=config.get(CONF_PORT),
-            api_key=config.get(CONF_API_KEY),
             timeout=config.get(CONF_TIMEOUT),
             custom_model=config.get(CONF_CUSTOM_MODEL),
             targets=config.get(CONF_TARGETS),
@@ -255,7 +252,6 @@ class ObjectClassifyEntity(ImageProcessingEntity):
         self,
         ip_address,
         port,
-        api_key,
         timeout,
         custom_model,
         targets,
@@ -279,7 +275,6 @@ class ObjectClassifyEntity(ImageProcessingEntity):
         self._cpai_object = cpai.CodeProjectAIObject(
             ip=ip_address,
             port=port,
-            api_key=api_key,
             timeout=timeout,
             min_confidence=MIN_CONFIDENCE,
             custom_model=custom_model,
